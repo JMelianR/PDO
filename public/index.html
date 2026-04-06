@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Notas - PDO</title>
+    <!-- Google Fonts para tipografías modernas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="auth-wrapper fade-in">
+        <div class="card" style="max-width: 400px; width: 100%;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2>Portal de Acceso</h2>
+                <p>Sistema de Notas Serverless</p>
+            </div>
+
+            <div id="error-alert" class="alert alert-error" style="display: none;"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Ingrese su usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required>
+                </div>
+                <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Si el usuario ya está autenticado, lo redirigimos
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            if (user.role === 'admin') window.location.href = '/admin.html';
+            else if (user.role === 'profesor') window.location.href = '/profesor.html';
+            else if (user.role === 'alumno') window.location.href = '/alumno.html';
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorAlert = document.getElementById('error-alert');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            errorAlert.style.display = 'none';
+            submitBtn.textContent = 'Verificando...';
+            submitBtn.disabled = true;
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Guardar JWT y datos de usuario en localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    // Redireccionar
+                    if (data.user.role === 'admin') window.location.href = '/admin.html';
+                    else if (data.user.role === 'profesor') window.location.href = '/profesor.html';
+                    else if (data.user.role === 'alumno') window.location.href = '/alumno.html';
+                } else {
+                    errorAlert.textContent = data.error || 'Ocurrió un error en la autenticación.';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorAlert.textContent = 'Error de conexión con el servidor.';
+                errorAlert.style.display = 'block';
+            } finally {
+                submitBtn.textContent = 'Ingresar';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

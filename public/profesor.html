@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Profesor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || user?.role !== 'profesor') {
+            window.location.href = '/index.html';
+        }
+    </script>
+</head>
+<body>
+    <nav class="navbar slide-in">
+        <div class="navbar-brand">🏫 Colegio Generico</div>
+        <div class="navbar-nav">
+            <span class="user-badge" id="user-badge-text"></span>
+            <button onclick="logout()" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">Cerrar Sesión</button>
+        </div>
+    </nav>
+    <main class="container fade-in">
+        <div class="grid" style="grid-template-columns: 1fr; margin-bottom: 2rem;">
+            <div>
+                <h2>Panel de Profesor 🎓</h2>
+                <p>Gestiona tus materias y calificaciones(fase inicial)</p>
+            </div>
+        </div>
+
+        <div id="messages" class="alert alert-info">
+            En construcción: pronto podrás ver el listado de alumnos de tus cursos.
+        </div>
+    </main>
+    <script>
+        document.getElementById('user-badge-text').textContent = `${user.name} (Profesor)`;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

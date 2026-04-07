@@ -116,10 +116,7 @@
                     <div class="form-group">
                         <label>Período</label>
                         <select id="sel_period" class="form-control" onchange="renderGradeTable()">
-                            <option value="Trimestre 1">Trimestre 1</option>
-                            <option value="Trimestre 2">Trimestre 2</option>
-                            <option value="Trimestre 3">Trimestre 3</option>
-                            <option value="Recuperatorio">Recuperatorio</option>
+                            <!-- Populated dynamically by JS -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -153,6 +150,23 @@
 
     <script>
         document.getElementById('user-badge-text').textContent = `${user.name} (Profesor)`;
+
+        // Populate period selector with semesters + current year
+        (function populatePeriods() {
+            const year = new Date().getFullYear();
+            const sel = document.getElementById('sel_period');
+            const options = [
+                { value: `Semestre 1 - ${year}`, label: `Semestre 1 - ${year}` },
+                { value: `Semestre 2 - ${year}`, label: `Semestre 2 - ${year}` },
+                { value: `Recuperatorio - ${year}`, label: `Recuperatorio - ${year}` }
+            ];
+            options.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.label;
+                sel.appendChild(opt);
+            });
+        })();
 
         let allData = { subjects: [], courses: [], students: [], grades: [] };
 

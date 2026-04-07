@@ -33,6 +33,40 @@
             padding: 10px 14px; border-bottom: 1px solid var(--border-color);
         }
         .subject-item:last-child { border-bottom: none; }
+
+        /* Custom Confirm Modal */
+        .confirm-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 9999; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .confirm-overlay.active { display: flex; }
+        .confirm-box {
+            background: #1e293b; border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 2rem; max-width: 420px; width: 90%; text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+        .confirm-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .confirm-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .confirm-msg { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+        .btn-cancel {
+            padding: 8px 24px; background: transparent; border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer;
+            font-size: 0.9rem; transition: all 0.2s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+        .btn-confirm-delete {
+            padding: 8px 24px; background: #ef4444; border: none; border-radius: 8px;
+            color: white; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-confirm-delete:hover { background: #dc2626; transform: translateY(-1px); }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -100,6 +134,19 @@
         </div>
     </main>
 
+    <!-- Custom Confirm Modal -->
+    <div class="confirm-overlay" id="confirm-overlay">
+        <div class="confirm-box">
+            <div class="confirm-icon">🗑️</div>
+            <div class="confirm-title" id="confirm-title">¿Eliminar materia?</div>
+            <div class="confirm-msg" id="confirm-msg">Esta acción no se puede deshacer.</div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="confirm-cancel-btn" onclick="closeConfirm()">Cancelar</button>
+                <button class="btn-confirm-delete" id="confirm-ok-btn">🗑️ Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.getElementById('user-badge-text').textContent = `${user.name} (Admin)`;
 
@@ -109,6 +156,29 @@
         }
 
         let appData = {};
+
+        function showConfirm(title, msg, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-msg').textContent = msg;
+            const okBtn = document.getElementById('confirm-ok-btn');
+            // Clone to remove previous event listeners
+            const newBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newBtn, okBtn);
+            newBtn.addEventListener('click', () => {
+                closeConfirm();
+                onConfirm();
+            });
+            document.getElementById('confirm-overlay').classList.add('active');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirm-overlay').classList.remove('active');
+        }
+
+        // Close on overlay backdrop click
+        document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closeConfirm();
+        });
 
         async function loadData() {
             try {
@@ -137,7 +207,7 @@
             container.innerHTML = appData.subjects.map(s => `
                 <div class="subject-item">
                     <span style="font-weight: 500;">${s.nombre}</span>
-                    <button class="btn" style="padding:4px 10px; font-size:13px; background: #ef4444; color: white; border: none; border-radius: 4px;" onclick="deleteSubject(${s.id}, '${s.nombre}')">🗑️ Eliminar</button>
+                    <button class="btn" style="padding:4px 10px; font-size:13px; background: #ef4444; color: white; border: none; border-radius: 4px;" onclick="deleteSubject(${s.id}, '${s.nombre.replace(/'/g, "\\'")}')">🗑️ Eliminar</button>
                 </div>
             `).join('');
         }
@@ -181,7 +251,8 @@
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(data)
             });
-            return await res.json();
+            const json = await res.json();
+            return { ok: res.ok, ...json };
         }
 
         async function createSubject() {
@@ -190,19 +261,24 @@
             if (!nombre) return showMsg('Escribe un nombre para la materia', false);
             try {
                 const result = await apiPost({ action: 'create_subject', nombre });
-                showMsg(result.message || result.error, !result.error);
+                showMsg(result.message || result.error, result.ok);
                 input.value = '';
                 loadData();
             } catch (err) { showMsg('Error de conexión', false); }
         }
 
-        async function deleteSubject(id, nombre) {
-            if (!confirm(`¿Eliminar la materia "${nombre}"? Se desasignará de todos los profesores.`)) return;
-            try {
-                const result = await apiPost({ action: 'delete_subject', subject_id: id });
-                showMsg(result.message || result.error, !result.error);
-                loadData();
-            } catch (err) { showMsg('Error de conexión', false); }
+        function deleteSubject(id, nombre) {
+            showConfirm(
+                '¿Eliminar materia?',
+                `Se eliminará "${nombre}" y se desasignará de todos los profesores.`,
+                async () => {
+                    try {
+                        const result = await apiPost({ action: 'delete_subject', subject_id: id });
+                        showMsg(result.message || result.error, result.ok);
+                        loadData();
+                    } catch (err) { showMsg('Error de conexión', false); }
+                }
+            );
         }
 
         async function assignSubject() {
@@ -211,18 +287,23 @@
             if (!professor_id || !subject_id) return showMsg('Selecciona un profesor y una materia', false);
             try {
                 const result = await apiPost({ action: 'assign_subject', professor_id, subject_id });
-                showMsg(result.message || result.error, !result.error);
+                showMsg(result.message || result.error, result.ok);
                 loadData();
             } catch (err) { showMsg('Error de conexión', false); }
         }
 
-        async function unassignSubject(professor_id, subject_id) {
-            if (!confirm('¿Desasignar esta materia del profesor?')) return;
-            try {
-                const result = await apiPost({ action: 'unassign_subject', professor_id, subject_id });
-                showMsg(result.message || result.error, !result.error);
-                loadData();
-            } catch (err) { showMsg('Error de conexión', false); }
+        function unassignSubject(professor_id, subject_id) {
+            showConfirm(
+                '¿Desasignar materia?',
+                'Se quitará esta asignación del profesor.',
+                async () => {
+                    try {
+                        const result = await apiPost({ action: 'unassign_subject', professor_id, subject_id });
+                        showMsg(result.message || result.error, result.ok);
+                        loadData();
+                    } catch (err) { showMsg('Error de conexión', false); }
+                }
+            );
         }
 
         function showMsg(text, isSuccess) {

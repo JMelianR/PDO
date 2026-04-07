@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Año Escolar | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-nav { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+        .tab-nav a {
+            padding: 12px 24px; text-decoration: none; color: var(--text-secondary);
+            font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab-nav a:hover { color: var(--text-primary); }
+        .tab-nav a.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+
+        /* Close year hero */
+        .close-year-hero {
+            background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.03) 100%);
+            border: 1px solid rgba(239,68,68,0.25); border-radius: 16px;
+            padding: 2.5rem; text-align: center; margin-bottom: 2rem;
+        }
+        .close-year-hero h3 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .close-year-hero p  { color: var(--text-secondary); max-width: 520px; margin: 0 auto 1.5rem; line-height: 1.6; }
+        .btn-close-year {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 32px; background: #ef4444; color: white;
+            border: none; border-radius: 10px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+        }
+        .btn-close-year:hover { background: #dc2626; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(239,68,68,0.3); }
+        .btn-close-year:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Warning checklist */
+        .warning-list {
+            display: flex; flex-direction: column; gap: 8px;
+            max-width: 480px; margin: 0 auto 2rem; text-align: left;
+        }
+        .warning-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; color: var(--text-secondary);
+        }
+        .warning-item .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+        /* Archive history */
+        .archive-card {
+            border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+            background: rgba(255,255,255,0.02); cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .archive-card:hover { border-color: var(--accent-primary); background: rgba(96,165,250,0.04); }
+        .archive-header {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .archive-year {
+            font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);
+        }
+        .archive-date { font-size: 0.82rem; color: var(--text-secondary); }
+        .archive-stats { display: flex; gap: 1.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .archive-stat { font-size: 0.85rem; color: var(--text-secondary); }
+        .archive-stat strong { color: var(--text-primary); }
+
+        /* Detail drawer */
+        .archive-detail {
+            display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;
+        }
+        .archive-detail.open { display: block; }
+        .detail-tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .detail-tab {
+            padding: 8px 18px; background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--text-secondary); cursor: pointer; font-size: 0.88rem; transition: all 0.15s;
+        }
+        .detail-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .detail-content { display: none; }
+        .detail-content.active { display: block; }
+
+        .mini-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .mini-table th {
+            background: rgba(96,165,250,0.08); color: var(--text-secondary);
+            padding: 8px 12px; text-align: left; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .mini-table td { padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .mini-table tr:last-child td { border-bottom: none; }
+        .grade-val { font-weight: 600; }
+        .grade-green { color: var(--success); }
+        .grade-yellow { color: var(--warning); }
+        .grade-red { color: var(--danger); }
+
+        .empty-state { text-align: center; padding: 2.5rem; color: var(--text-secondary); }
+
+        /* Success result banner */
+        .result-banner {
+            display: none; padding: 1.25rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;
+            border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.08);
+        }
+        .result-banner.show { display: block; }
+        .result-banner h4 { color: var(--success); margin-bottom: 0.5rem; font-size: 1rem; }
+        .result-banner .stat-row { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .result-banner .rs { font-size: 0.85rem; color: var(--text-secondary); }
+        .result-banner .rs strong { color: var(--text-primary); }
+    </style>
+    <script>
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user'));
+        if (!token || user?.role !== 'admin') window.location.href = '/index.html';
+    </script>
+</head>
+<body>
+    <nav class="navbar slide-in">
+        <div class="navbar-brand">🏫 Colegio Generico</div>
+        <div class="navbar-nav">
+            <span class="user-badge" id="user-badge-text"></span>
+            <button onclick="logout()" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        <div class="grid" style="grid-template-columns: 1fr; margin-bottom: 0;">
+            <div><h2>Panel de Administración 👑</h2></div>
+        </div>
+
+        <div class="tab-nav">
+            <a href="/admin.html">👤 Usuarios</a>
+            <a href="/admin-materias.html">📚 Materias</a>
+            <a href="/admin-cursos.html">🏫 Cursos y Notas</a>
+            <a href="/admin-anio.html" class="active">📅 Año Escolar</a>
+        </div>
+
+        <div id="messages" class="alert alert-success" style="display:none;"></div>
+
+        <!-- Result banner after closure -->
+        <div id="result-banner" class="result-banner">
+            <h4>✅ Año escolar cerrado exitosamente</h4>
+            <div class="stat-row" id="result-stats"></div>
+        </div>
+
+        <!-- Close Year Hero -->
+        <div class="card fade-in close-year-hero">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+            <h3>Cerrar Año Escolar <span id="current-year"></span></h3>
+            <p>
+                Esta acción archivará permanentemente toda la información académica del año actual
+                (notas, inscripciones y asignaciones de profesores) y dejará el sistema limpio
+                para el nuevo año escolar. <strong>Los usuarios y la estructura de cursos/materias se conservan.</strong>
+            </p>
+
+            <div class="warning-list">
+                <div class="warning-item">
+                    <span class="icon">📊</span>
+                    <span>Todas las <strong>notas</strong> se archivarán y se eliminarán del sistema activo.</span>
+                </div>
+                <div class="warning-item">
+                    <span class="icon">👥</span>
+                    <span>Todas las <strong>inscripciones de alumnos</strong> a cursos se limpiarán.</span>
+                </div>
+                <div class="warning-item">
+                    <span class="icon">👨‍🏫</span>
+                    <span>Todas las <strong>asignaciones de profesores</strong> a cursos se desvinculan.</span>
+                </div>
+                <div class="warning-item">
+                    <span class="icon">🔒</span>
+                    <span>Esta operación <strong>no se puede deshacer</strong>. Los datos quedan en el historial.</span>
+                </div>
+            </div>
+
+            <button id="btn-close-year" class="btn-close-year" onclick="confirmCloseYear()">
+                🔒 Cerrar Año Escolar
+            </button>
+        </div>
+
+        <!-- Archive History -->
+        <div class="card fade-in">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin:0;">🗂️ Historial de Años Escolares</h3>
+                <input type="text" id="archiveSearch" class="form-control" placeholder="🔍 Buscar por año (ej: 2024)..." 
+                       onkeyup="filterArchives()" style="max-width: 300px; border-radius: 20px;">
+            </div>
+            <div id="archive-list">
+                <p class="empty-state">Cargando...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" style="
+        display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+        z-index:1000; display:none; align-items:center; justify-content:center;">
+        <div style="
+            background: var(--bg-card); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 16px; padding: 2rem; max-width: 420px; width: 90%; text-align:center;">
+            <div style="font-size:3rem; margin-bottom:1rem;">⚠️</div>
+            <h3 style="margin-bottom:0.5rem;">¿Cerrar año escolar <span id="modal-year"></span>?</h3>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">
+                Esta acción archivará todos los datos académicos activos y limpiará el sistema.
+                No se puede deshacer.
+            </p>
+            <div style="display:flex; gap:1rem; justify-content:center;">
+                <button onclick="closeModal()" style="
+                    padding:10px 24px; background:transparent; border:1px solid var(--border-color);
+                    border-radius:8px; color:var(--text-secondary); cursor:pointer; font-size:0.9rem;">
+                    Cancelar
+                </button>
+                <button id="modal-confirm-btn" onclick="executeCloseYear()" style="
+                    padding:10px 24px; background:#ef4444; color:white; border:none;
+                    border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:600;">
+                    🔒 Sí, cerrar año
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('user-badge-text').textContent = `${user.name} (Admin)`;
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        document.getElementById('modal-year').textContent = new Date().getFullYear();
+
+        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
+
+        function showMsg(text, isSuccess) {
+            const el = document.getElementById('messages');
+            el.textContent = text;
+            el.className = isSuccess ? 'alert alert-success' : 'alert alert-error';
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        // ── Load archive history ──────────────────────────────────
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) { if (res.status === 401) logout(); return; }
+                const data = await res.json();
+                renderArchiveList(data.year_closures || []);
+            } catch (e) { showMsg('Error de conexión', false); }
+        }
+
+        function renderArchiveList(closures) {
+            const container = document.getElementById('archive-list');
+            if (closures.length === 0) {
+                container.innerHTML = `<p class="empty-state">No hay años escolares cerrados aún.<br>
+                    <span style="font-size:0.85rem;">Cuando cierres el primer año, aparecerá aquí el historial.</span></p>`;
+                return;
+            }
+            container.innerHTML = closures.map(c => {
+                const date = new Date(c.closed_at);
+                const dateStr = date.toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                return `
+                <div class="archive-card" onclick="toggleArchiveDetail(${c.id}, this)">
+                    <div class="archive-header">
+                        <div>
+                            <div class="archive-year">📅 Año ${c.year}</div>
+                            <div class="archive-date">Cerrado el ${dateStr}</div>
+                        </div>
+                        <span style="color:var(--text-secondary); font-size:1.2rem; transition: transform 0.2s;" class="toggle-icon">▼</span>
+                    </div>
+                    <div class="archive-stats">
+                        <div class="archive-stat">📊 <strong>${c.total_grades}</strong> notas archivadas</div>
+                        <div class="archive-stat">👥 <strong>${c.total_students}</strong> inscripciones</div>
+                        <div class="archive-stat">🏫 <strong>${c.total_courses}</strong> cursos</div>
+                    </div>
+                    <div class="archive-detail" id="detail-${c.id}">
+                        <div style="margin: 1rem 0; display: flex; gap: 10px; align-items: center;">
+                            <input type="text" class="form-control" placeholder="🔍 Filtrar alumnos, cursos o materias en este año..." 
+                                   onkeyup="filterArchiveDetail(${c.id}, this.value)" style="font-size: 0.85rem; padding: 8px 15px; border-radius: 8px;">
+                        </div>
+                        <div class="detail-tabs">
+                            <button class="detail-tab active" onclick="switchDetailTab(event, 'grades-${c.id}', 'enrollments-${c.id}')">📊 Notas</button>
+                            <button class="detail-tab" onclick="switchDetailTab(event, 'enrollments-${c.id}', 'grades-${c.id}')">👥 Inscripciones</button>
+                        </div>
+                        <div class="detail-content active" id="grades-${c.id}">
+                            <p style="color:var(--text-secondary); font-size:0.82rem; text-align:center; padding:1rem;">
+                                Cargando notas...
+                            </p>
+                        </div>
+                        <div class="detail-content" id="enrollments-${c.id}">
+                            <p style="color:var(--text-secondary); font-size:0.82rem; text-align:center; padding:1rem;">
+                                Cargando inscripciones...
+                            </p>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function switchDetailTab(e, activeId, inactiveId) {
+            e.stopPropagation();
+            const tabs = e.target.closest('.detail-tabs').querySelectorAll('.detail-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(activeId).classList.add('active');
+            document.getElementById(inactiveId).classList.remove('active');
+        }
+
+        async function toggleArchiveDetail(closureId, card) {
+            const detail  = document.getElementById(`detail-${closureId}`);
+            const icon    = card.querySelector('.toggle-icon');
+            const isOpen  = detail.classList.contains('open');
+
+            if (isOpen) {
+                detail.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+                return;
+            }
+
+            detail.classList.add('open');
+            icon.style.transform = 'rotate(180deg)';
+
+            // Load data if not yet loaded
+            const gradesContainer = document.getElementById(`grades-${closureId}`);
+            if (gradesContainer.dataset.loaded) return;
+            gradesContainer.dataset.loaded = '1';
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'get_archive_detail', closure_id: closureId })
+                });
+                const data = await res.json();
+
+                // Render grades table
+                if (!data.grades || data.grades.length === 0) {
+                    gradesContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin notas archivadas.</p>';
+                } else {
+                    const rows = data.grades.map(g => {
+                        const cls = g.value >= 5 ? 'grade-green' : g.value >= 4 ? 'grade-yellow' : 'grade-red';
+                        return `<tr>
+                            <td>${g.student_name}</td>
+                            <td>${g.course_name}</td>
+                            <td>${g.subject_name}</td>
+                            <td>${g.period}</td>
+                            <td>${g.type}</td>
+                            <td><span class="grade-val ${cls}">${String(g.value).replace('.', ',')}</span></td>
+                        </tr>`;
+                    }).join('');
+                    gradesContainer.innerHTML = `<div style="overflow-x:auto;">
+                        <table class="mini-table">
+                            <thead><tr>
+                                <th>Alumno</th><th>Curso</th><th>Materia</th>
+                                <th>Período</th><th>Evaluación</th><th>Nota</th>
+                            </tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table></div>`;
+                }
+
+                // Render enrollments table
+                const enrollContainer = document.getElementById(`enrollments-${closureId}`);
+                if (!data.enrollments || data.enrollments.length === 0) {
+                    enrollContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin inscripciones archivadas.</p>';
+                } else {
+                    const rows = data.enrollments.map(e => `<tr>
+                        <td>${e.student_name}</td><td>${e.course_name}</td>
+                    </tr>`).join('');
+                    enrollContainer.innerHTML = `<div style="overflow-x:auto;">
+                        <table class="mini-table">
+                            <thead><tr><th>Alumno</th><th>Curso</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table></div>`;
+                }
+            } catch (e) {
+                gradesContainer.innerHTML = '<p style="color:var(--danger); text-align:center; padding:1rem;">Error cargando detalle.</p>';
+            }
+        }
+
+        // ── Close Year flow ───────────────────────────────────────
+        function confirmCloseYear() {
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        // Close on backdrop click
+        document.getElementById('confirm-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        async function executeCloseYear() {
+            const btn      = document.getElementById('modal-confirm-btn');
+            const closeBtn = document.getElementById('btn-close-year');
+            btn.disabled = true;
+            btn.textContent = '⏳ Archivando...';
+            closeBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'close_year' })
+                });
+                const data = await res.json();
+
+                closeModal();
+
+                if (res.ok) {
+                    // Show result banner
+                    const banner = document.getElementById('result-banner');
+                    banner.classList.add('show');
+                    document.getElementById('result-stats').innerHTML = `
+                        <div class="rs">📊 Notas archivadas: <strong>${data.stats.grades_archived}</strong></div>
+                        <div class="rs">👥 Inscripciones limpiadas: <strong>${data.stats.students_unenrolled}</strong></div>
+                        <div class="rs">🏫 Cursos procesados: <strong>${data.stats.courses_cleared}</strong></div>`;
+                    banner.scrollIntoView({ behavior: 'smooth' });
+                    // Reload archive list
+                    await loadData();
+                } else {
+                    showMsg(data.error || 'Error al cerrar el año', false);
+                }
+            } catch (e) {
+                closeModal();
+                showMsg('Error de conexión', false);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔒 Sí, cerrar año';
+                closeBtn.disabled = false;
+            }
+        }
+
+        function filterArchives() {
+            const query = document.getElementById('archiveSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.archive-card');
+            cards.forEach(card => {
+                const yearText = card.querySelector('.archive-year').textContent.toLowerCase();
+                const dateText = card.querySelector('.archive-date').textContent.toLowerCase();
+                if (yearText.includes(query) || dateText.includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterArchiveDetail(closureId, query) {
+            query = query.toLowerCase();
+            const gradesRows = document.querySelectorAll(`#grades-${closureId} tbody tr`);
+            const enrollRows = document.querySelectorAll(`#enrollments-${closureId} tbody tr`);
+
+            gradesRows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+            enrollRows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cursos y Notas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-nav { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+        .tab-nav a {
+            padding: 12px 24px; text-decoration: none; color: var(--text-secondary);
+            font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab-nav a:hover { color: var(--text-primary); }
+        .tab-nav a.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 768px) { .section-grid { grid-template-columns: 1fr; } }
+        .mini-form { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+        .mini-form select, .mini-form input { flex: 1; min-width: 120px; }
+        .course-card {
+            border: 1px solid var(--border-color); border-radius: 10px; padding: 16px;
+            margin-bottom: 12px; background: rgba(255,255,255,0.02); transition: border-color 0.2s;
+        }
+        .course-card:hover { border-color: var(--accent-primary); }
+        .course-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+        }
+        .course-header h4 { margin: 0; font-size: 16px; }
+        .enrollment-chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+            background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 16px; font-size: 12px; color: var(--text-primary); margin: 3px;
+        }
+        .enrollment-chip button {
+            background: #ef4444; color: white; border: none; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 12px; cursor: pointer; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .grade-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .grade-row:last-child { border-bottom: none; }
+        .empty-state { color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 14px; }
+    </style>
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!token || user?.role !== 'admin') { window.location.href = '/index.html'; }
+    </script>
+</head>
+<body>
+    <nav class="navbar slide-in">
+        <div class="navbar-brand">🏫 Colegio Generico</div>
+        <div class="navbar-nav">
+            <span class="user-badge" id="user-badge-text"></span>
+            <button onclick="logout()" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">Cerrar Sesión</button>
+        </div>
+    </nav>
+    <main class="container fade-in">
+        <div class="grid" style="grid-template-columns: 1fr; margin-bottom: 0;">
+            <div><h2>Panel de Administración 👑</h2></div>
+        </div>
+
+        <div class="tab-nav">
+            <a href="/admin.html">👤 Usuarios</a>
+            <a href="/admin-materias.html">📚 Materias</a>
+            <a href="/admin-cursos.html" class="active">🏫 Cursos y Notas</a>
+        </div>
+
+        <div id="messages" class="alert alert-success" style="display:none;"></div>
+
+        <!-- Crear Curso -->
+        <div class="card fade-in" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+                <h3 style="margin: 0;">➕ Crear Nuevo Curso</h3>
+            </div>
+            <div class="mini-form">
+                <select id="courseLevel" class="form-control">
+                    <option value="">Nivel...</option>
+                    <option value="1">1° Básico</option>
+                    <option value="2">2° Básico</option>
+                    <option value="3">3° Básico</option>
+                    <option value="4">4° Básico</option>
+                    <option value="5">5° Básico</option>
+                    <option value="6">6° Básico</option>
+                    <option value="7">7° Básico</option>
+                    <option value="8">8° Básico</option>
+                </select>
+                <select id="courseLetter" class="form-control">
+                    <option value="">Letra...</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                </select>
+                <button onclick="createCourse()" class="btn btn-primary" style="white-space: nowrap; padding: 8px 20px;">Crear Curso</button>
+            </div>
+        </div>
+
+        <!-- Sección de Cursos existentes e Inscripción -->
+        <div class="section-grid">
+            <!-- Columna Izquierda: Cursos y alumnos inscritos -->
+            <div class="card fade-in">
+                <h3 style="margin-top: 0; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">🏫 Cursos Activos</h3>
+                <div id="courses-list">
+                    <p class="empty-state">Cargando...</p>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Inscribir alumno -->
+            <div class="card fade-in">
+                <h3 style="margin-top: 0; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">📝 Inscribir Alumno en Curso</h3>
+                <div class="mini-form">
+                    <select id="enrollStudent" class="form-control">
+                        <option value="">Seleccionar alumno...</option>
+                    </select>
+                    <select id="enrollCourse" class="form-control">
+                        <option value="">Seleccionar curso...</option>
+                    </select>
+                    <button onclick="enrollStudent()" class="btn btn-primary" style="white-space: nowrap; padding: 8px 16px;">Inscribir</button>
+                </div>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">📊 Notas por Curso</h3>
+                <div style="margin-bottom: 1rem;">
+                    <select id="gradesCourseFilter" class="form-control" onchange="renderGrades()">
+                        <option value="">Seleccionar curso para ver notas...</option>
+                    </select>
+                </div>
+                <div id="grades-list">
+                    <p class="empty-state">Selecciona un curso para ver las notas</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('user-badge-text').textContent = `${user.name} (Admin)`;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/index.html';
+        }
+
+        let appData = {};
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    appData = await res.json();
+                    renderCourses();
+                    renderDropdowns();
+                    renderGrades();
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                showMsg('Error de conexión', false);
+            }
+        }
+
+        function renderCourses() {
+            const container = document.getElementById('courses-list');
+            if (!appData.courses || appData.courses.length === 0) {
+                container.innerHTML = '<p class="empty-state">No hay cursos creados aún</p>';
+                return;
+            }
+            container.innerHTML = appData.courses.map(c => {
+                const enrolled = (appData.enrollment || []).filter(e => e.course_id === c.id);
+                const studentsHtml = enrolled.length > 0
+                    ? enrolled.map(e => `
+                        <div class="enrollment-chip">
+                            ${e.student_name}
+                            <button onclick="unenrollStudent(${e.user_id}, ${c.id})" title="Retirar">&times;</button>
+                        </div>
+                    `).join('')
+                    : '<span style="color: var(--text-secondary); font-size: 13px;">Sin alumnos inscritos</span>';
+
+                return `
+                    <div class="course-card">
+                        <div class="course-header">
+                            <h4>${c.nombre}</h4>
+                            <button class="btn" style="padding:4px 10px; font-size:13px; background: #ef4444; color: white; border: none; border-radius: 4px;" onclick="deleteCourse(${c.id}, '${c.nombre}')">🗑️ Eliminar</button>
+                        </div>
+                        <div>${studentsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDropdowns() {
+            // Alumnos
+            const studentSelect = document.getElementById('enrollStudent');
+            studentSelect.innerHTML = '<option value="">Seleccionar alumno...</option>';
+            if (appData.students) {
+                appData.students.forEach(s => {
+                    studentSelect.innerHTML += `<option value="${s.id}">${s.nombre} ${s.apellido}</option>`;
+                });
+            }
+
+            // Cursos (para inscripción)
+            const courseSelect = document.getElementById('enrollCourse');
+            courseSelect.innerHTML = '<option value="">Seleccionar curso...</option>';
+
+            // Cursos (para filtro de notas)
+            const gradeFilter = document.getElementById('gradesCourseFilter');
+            gradeFilter.innerHTML = '<option value="">Seleccionar curso para ver notas...</option>';
+
+            if (appData.courses) {
+                appData.courses.forEach(c => {
+                    courseSelect.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+                    gradeFilter.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+                });
+            }
+        }
+
+        function renderGrades() {
+            const container = document.getElementById('grades-list');
+            const courseId = parseInt(document.getElementById('gradesCourseFilter').value);
+            
+            if (!courseId) {
+                container.innerHTML = '<p class="empty-state">Selecciona un curso para ver las notas</p>';
+                return;
+            }
+
+            const courseGrades = (appData.grades || []).filter(g => g.course_id === courseId);
+            if (courseGrades.length === 0) {
+                container.innerHTML = '<p class="empty-state">No hay notas registradas para este curso</p>';
+                return;
+            }
+
+            // Group by student
+            const byStudent = {};
+            courseGrades.forEach(g => {
+                if (!byStudent[g.student_name]) byStudent[g.student_name] = [];
+                byStudent[g.student_name].push(g);
+            });
+
+            let html = '';
+            for (const [name, grades] of Object.entries(byStudent)) {
+                html += `<div style="margin-bottom: 12px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px;">`;
+                html += `<strong style="display: block; margin-bottom: 6px;">${name}</strong>`;
+                grades.forEach(g => {
+                    html += `<div class="grade-row">
+                        <span>${g.period} - ${g.type}</span>
+                        <span style="font-weight: 600; color: ${g.value >= 4 ? '#10b981' : '#ef4444'};">${g.value !== null ? g.value : '-'}</span>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        async function apiPost(data) {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            return await res.json();
+        }
+
+        async function createCourse() {
+            const level = document.getElementById('courseLevel').value;
+            const letter = document.getElementById('courseLetter').value;
+            if (!level || !letter) return showMsg('Selecciona nivel y letra para el curso', false);
+            const nombre = `${level}° Básico ${letter}`;
+            try {
+                const result = await apiPost({ action: 'create_course', nombre, anio: level, division: letter });
+                showMsg(result.message || result.error, !result.error);
+                document.getElementById('courseLevel').value = '';
+                document.getElementById('courseLetter').value = '';
+                loadData();
+            } catch (err) { showMsg('Error de conexión', false); }
+        }
+
+        async function deleteCourse(id, nombre) {
+            if (!confirm(`¿Eliminar "${nombre}"? Se borrarán todas las inscripciones y notas asociadas.`)) return;
+            try {
+                const result = await apiPost({ action: 'delete_course', course_id: id });
+                showMsg(result.message || result.error, !result.error);
+                loadData();
+            } catch (err) { showMsg('Error de conexión', false); }
+        }
+
+        async function enrollStudent() {
+            const student_id = document.getElementById('enrollStudent').value;
+            const course_id = document.getElementById('enrollCourse').value;
+            if (!student_id || !course_id) return showMsg('Selecciona un alumno y un curso', false);
+            try {
+                const result = await apiPost({ action: 'enroll_student', student_id, course_id });
+                showMsg(result.message || result.error, !result.error);
+                loadData();
+            } catch (err) { showMsg('Error de conexión', false); }
+        }
+
+        async function unenrollStudent(student_id, course_id) {
+            if (!confirm('¿Retirar este alumno del curso?')) return;
+            try {
+                const result = await apiPost({ action: 'unenroll_student', student_id, course_id });
+                showMsg(result.message || result.error, !result.error);
+                loadData();
+            } catch (err) { showMsg('Error de conexión', false); }
+        }
+
+        function showMsg(text, isSuccess) {
+            const msg = document.getElementById('messages');
+            msg.textContent = text;
+            msg.className = isSuccess ? 'alert alert-success' : 'alert alert-error';
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

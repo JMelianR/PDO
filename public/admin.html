@@ -6,6 +6,15 @@
     <title>Panel de Administración</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-nav { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+        .tab-nav a {
+            padding: 12px 24px; text-decoration: none; color: var(--text-secondary);
+            font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab-nav a:hover { color: var(--text-primary); }
+        .tab-nav a.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+    </style>
     <script>
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user'));
@@ -31,10 +40,17 @@
         </div>
 
         <div id="messages" class="alert alert-success" style="display:none;"></div>
+
+        <div class="tab-nav">
+            <a href="/admin.html" class="active">👤 Usuarios</a>
+            <a href="/admin-materias.html">📚 Materias</a>
+            <a href="/admin-cursos.html">🏫 Cursos y Notas</a>
+        </div>
         
         <div class="card fade-in">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0;">Usuarios y Profesores</h3>
+                <h3 style="margin: 0; white-space: nowrap;">Usuarios y Profesores</h3>
+                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Filtrar por nombre..." onkeyup="filterUsers()" style="flex: 1; max-width: 300px; margin: 0 auto; border-radius: 20px;">
                 <button id="fabBtn" onclick="openUserModal()" title="Agregar nuevo usuario" style="height: 44px; border-radius: 22px; padding: 0 20px; background: var(--accent-primary); color: white; font-size: 15px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.4); display: flex; align-items: center; gap: 8px; justify-content: center; transition: transform 0.2s, background 0.2s;">
                     <span style="font-size: 22px; margin-top: -2px;">+</span>
                     <span>Agregar Nuevo Usuario</span>
@@ -43,7 +59,7 @@
             <table class="table" id="users-table">
                 <thead>
                     <tr>
-                        <th>ID</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Acciones</th>
+                        <th>Usuario</th><th>Nombre</th><th>Rol</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody">
@@ -117,11 +133,13 @@
                 tbody.innerHTML = '';
                 data.users.forEach(u => {
                     const row = `<tr>
-                        <td>${u.id}</td>
                         <td>${u.username}</td>
                         <td>${u.nombre} ${u.apellido}</td>
-                        <td><span class="badge ${u.role === 'admin' ? 'badge-primary' : (u.role === 'profesor' ? 'badge-info' : 'badge-neutral')}">${u.role}</span></td>
-                        <td><button class="btn" style="padding:4px 8px; font-size:13px;" onclick="openPassModal(${u.id})">🔑 Clave</button></td>
+                        <td><span class="badge ${u.role === 'admin' ? 'badge-primary' : (u.role === 'profesor' ? 'badge-info' : 'badge-neutral')}" style="text-transform: capitalize;">${u.role}</span></td>
+                        <td>
+                            <button class="btn" style="padding:4px 10px; font-size:13px; background: var(--accent-primary); color: white; border: none; border-radius: 4px;" onclick="openPassModal(${u.id})">🔑 Clave</button>
+                            ${u.username !== 'admin' ? `<button class="btn" style="padding:4px 10px; font-size:13px; background: #ef4444; color: white; border: none; border-radius: 4px; margin-left: 4px;" onclick="deleteUser(${u.id}, '${u.username}')">🗑️ Eliminar</button>` : ''}
+                        </td>
                     </tr>`;
                     tbody.innerHTML += row;
                 });
@@ -209,12 +227,46 @@
             }
         });
 
+        async function deleteUser(id, username) {
+            if (!confirm(`¿Estás completamente seguro de eliminar a "${username}"? Esta acción no se puede deshacer.`)) return;
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'delete_user', user_id: id })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showMsg('Usuario eliminado permanentemente', true);
+                    loadData();
+                } else {
+                    showMsg(result.error || 'Error al eliminar', false);
+                }
+            } catch (err) {
+                showMsg('Error de red', false);
+            }
+        }
+
         function showMsg(text, isSuccess) {
             const msg = document.getElementById('messages');
             msg.textContent = text;
             msg.className = isSuccess ? 'alert alert-success' : 'alert alert-error';
             msg.style.display = 'block';
             setTimeout(() => msg.style.display = 'none', 3000);
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#users-tbody tr');
+            rows.forEach(row => {
+                const nombre = row.cells[1].textContent.toLowerCase();
+                const usuario = row.cells[0].textContent.toLowerCase();
+                if (nombre.includes(query) || usuario.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>

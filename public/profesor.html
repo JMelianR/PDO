@@ -3,45 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Profesor</title>
+    <title>Panel de Profesor | Colegio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-nav { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+        .tab-nav button {
+            padding: 12px 24px; background: transparent; border: none; border-bottom: 3px solid transparent;
+            color: var(--text-secondary); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 1rem;
+        }
+        .tab-nav button:hover { color: var(--text-primary); }
+        .tab-nav button.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grade-input {
+            width: 70px; padding: 6px 10px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color);
+            border-radius: 6px; color: var(--text-primary); text-align: center; font-size: 0.95rem;
+            outline: none; transition: border-color 0.2s;
+        }
+        .grade-input:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(96,165,250,0.2); }
+        .grade-input:disabled { opacity: 0.4; }
+        .save-btn {
+            padding: 5px 12px; background: var(--accent-primary); color: white; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
+        }
+        .save-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .filter-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-end; }
+        .filter-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
+        .filter-row label { font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem; font-weight: 500; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 1.5rem; text-align: center;
+        }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--accent-primary); }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .badge-primary { background: rgba(96,165,250,0.15); color: var(--accent-primary); }
+        .badge-info { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-neutral { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+        .table { width: 100%; border-collapse: collapse; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); font-size: 1.1rem; }
+        .alert-info { background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2); color: var(--accent-primary); }
+        select.form-control option { background: #0f172a; }
+    </style>
     <script>
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user'));
-        
-        if (!token || user?.role !== 'profesor') {
-            window.location.href = '/index.html';
-        }
+        if (!token || user?.role !== 'profesor') window.location.href = '/index.html';
     </script>
 </head>
 <body>
     <nav class="navbar slide-in">
-        <div class="navbar-brand">🏫 Colegio Generico</div>
+        <div class="navbar-brand">🏫 Colegio</div>
         <div class="navbar-nav">
             <span class="user-badge" id="user-badge-text"></span>
             <button onclick="logout()" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">Cerrar Sesión</button>
         </div>
     </nav>
+
     <main class="container fade-in">
-        <div class="grid" style="grid-template-columns: 1fr; margin-bottom: 2rem;">
-            <div>
-                <h2>Panel de Profesor 🎓</h2>
-                <p>Gestiona tus materias y calificaciones(fase inicial)</p>
+        <div style="margin-bottom: 2rem;">
+            <h2>Panel de Profesor 🎓</h2>
+            <p id="welcome-msg">Cargando información...</p>
+        </div>
+
+        <div id="messages" class="alert" style="display:none; margin-bottom:1rem;"></div>
+
+        <!-- Stat Cards -->
+        <div class="stat-grid" id="stat-grid" style="display:none;">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-subjects">0</div>
+                <div class="stat-label">Materias Asignadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-courses">0</div>
+                <div class="stat-label">Cursos con Alumnos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-students">0</div>
+                <div class="stat-label">Alumnos Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-grades">0</div>
+                <div class="stat-label">Calificaciones Cargadas</div>
             </div>
         </div>
 
-        <div id="messages" class="alert alert-info">
-            En construcción: pronto podrás ver el listado de alumnos de tus cursos.
+        <!-- Tabs -->
+        <div class="tab-nav">
+            <button class="active" onclick="switchTab('tab-grades', this)">📝 Cargar Notas</button>
+            <button onclick="switchTab('tab-overview', this)">📊 Resumen de Notas</button>
+        </div>
+
+        <!-- TAB: Cargar Notas -->
+        <div id="tab-grades" class="tab-content active">
+            <div class="card fade-in">
+                <h3 style="margin-bottom: 1.5rem;">Cargar / Editar Calificaciones</h3>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label>Curso</label>
+                        <select id="sel_course" class="form-control" onchange="renderGradeTable()">
+                            <option value="">-- Seleccionar Curso --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="sel_subject" class="form-control" onchange="renderGradeTable()">
+                            <option value="">-- Seleccionar Materia --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="sel_period" class="form-control" onchange="renderGradeTable()">
+                            <option value="Trimestre 1">Trimestre 1</option>
+                            <option value="Trimestre 2">Trimestre 2</option>
+                            <option value="Trimestre 3">Trimestre 3</option>
+                            <option value="Recuperatorio">Recuperatorio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Evaluación</label>
+                        <select id="sel_type" class="form-control" onchange="renderGradeTable()">
+                            <option value="Examen Parcial">Examen Parcial</option>
+                            <option value="Trabajo Práctico">Trabajo Práctico</option>
+                            <option value="Examen Final">Examen Final</option>
+                            <option value="Participación">Participación</option>
+                            <option value="Proyecto">Proyecto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="grade-table-container">
+                    <div class="empty-state">👆 Selecciona un curso y una materia para ver los alumnos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Resumen -->
+        <div id="tab-overview" class="tab-content">
+            <div class="card fade-in">
+                <h3 style="margin-bottom: 1.5rem;">Resumen de Todas las Calificaciones</h3>
+                <div id="overview-container">
+                    <div class="empty-state">Cargando...</div>
+                </div>
+            </div>
         </div>
     </main>
+
     <script>
         document.getElementById('user-badge-text').textContent = `${user.name} (Profesor)`;
+
+        let allData = { subjects: [], courses: [], students: [], grades: [] };
 
         function logout() {
             localStorage.clear();
             window.location.href = '/index.html';
         }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            if (tabId === 'tab-overview') renderOverview();
+        }
+
+        function showMsg(text, isSuccess) {
+            const el = document.getElementById('messages');
+            el.textContent = text;
+            el.className = isSuccess ? 'alert alert-success' : 'alert alert-error';
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3500);
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/professor', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401 || res.status === 403) { logout(); return; }
+                if (!res.ok) {
+                    const err = await res.json();
+                    showMsg('Error cargando datos: ' + (err.error || res.status), false);
+                    return;
+                }
+                allData = await res.json();
+
+                document.getElementById('welcome-msg').textContent =
+                    `Tienes ${allData.subjects.length} materia(s) asignada(s) y ${allData.students.length} alumno(s) en el sistema.`;
+
+                // Stats
+                document.getElementById('stat-subjects').textContent = allData.subjects.length;
+                document.getElementById('stat-courses').textContent = allData.courses.length;
+                document.getElementById('stat-students').textContent = allData.students.length;
+                document.getElementById('stat-grades').textContent = allData.grades.length;
+                document.getElementById('stat-grid').style.display = 'grid';
+
+                // Populate selects
+                const selCourse = document.getElementById('sel_course');
+                selCourse.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
+                allData.courses.forEach(c => {
+                    selCourse.innerHTML += `<option value="${c.id}">${c.nombre} (${c.anio} ${c.division})</option>`;
+                });
+
+                const selSubject = document.getElementById('sel_subject');
+                selSubject.innerHTML = '<option value="">-- Seleccionar Materia --</option>';
+                allData.subjects.forEach(s => {
+                    selSubject.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
+                });
+
+                if (allData.subjects.length === 0) {
+                    showMsg('No tienes materias asignadas. Contacta al administrador.', false);
+                }
+
+                renderGradeTable();
+            } catch (err) {
+                showMsg('Error de conexión: ' + err.message, false);
+            }
+        }
+
+        function renderGradeTable() {
+            const courseId = document.getElementById('sel_course').value;
+            const subjectId = document.getElementById('sel_subject').value;
+            const period = document.getElementById('sel_period').value;
+            const type = document.getElementById('sel_type').value;
+            const container = document.getElementById('grade-table-container');
+
+            if (!courseId) {
+                container.innerHTML = '<div class="empty-state">👆 Selecciona un curso y una materia para ver los alumnos</div>';
+                return;
+            }
+
+            const students = allData.students.filter(s => String(s.course_id) === String(courseId));
+
+            if (students.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay alumnos inscritos en este curso.</div>';
+                return;
+            }
+
+            let rows = '';
+            students.forEach(s => {
+                const existingGrade = allData.grades.find(g =>
+                    String(g.student_id) === String(s.id) &&
+                    String(g.course_id) === String(courseId) &&
+                    g.period === period &&
+                    g.type === type &&
+                    (subjectId ? String(g.subject_id) === String(subjectId) : !g.subject_id)
+                );
+                const gradeVal = existingGrade ? existingGrade.value : '';
+                const gradeId = existingGrade ? existingGrade.id : '';
+
+                rows += `<tr>
+                    <td>${s.apellido}, ${s.nombre}</td>
+                    <td><span style="color:var(--text-secondary);font-size:0.85rem;">${s.username}</span></td>
+                    <td>
+                        <input
+                            type="number" min="0" max="10" step="0.5"
+                            class="grade-input"
+                            id="grade_${s.id}"
+                            value="${gradeVal}"
+                            placeholder="—"
+                            data-grade-id="${gradeId}"
+                        />
+                    </td>
+                    <td>
+                        <button class="save-btn" onclick="saveGrade(${s.id}, '${courseId}', '${subjectId || ''}', '${period}', '${type}', this)">
+                            💾 Guardar
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            container.innerHTML = `
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">
+                    Mostrando <strong>${students.length}</strong> alumno(s) — ingresa una nota del 0 al 10 y guarda individualmente.
+                </p>
+                <div style="overflow-x:auto;">
+                    <table class="table">
+                        <thead><tr><th>Alumno</th><th>Usuario</th><th>Nota (0-10)</th><th>Acción</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        async function saveGrade(studentId, courseId, subjectId, period, type, btn) {
+            const input = document.getElementById(`grade_${studentId}`);
+            const value = input.value;
+
+            if (value === '' || isNaN(parseFloat(value))) {
+                showMsg('Ingresa un número válido entre 0 y 10.', false);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            try {
+                const payload = {
+                    action: 'save_grade',
+                    student_id: studentId,
+                    course_id: courseId,
+                    period,
+                    type,
+                    value: parseFloat(value)
+                };
+                if (subjectId) payload.subject_id = subjectId;
+
+                const res = await fetch('/api/professor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showMsg(result.message, true);
+                    await loadData(); // Reload to sync
+                } else {
+                    showMsg(result.error || 'Error al guardar', false);
+                }
+            } catch (e) {
+                showMsg('Error de conexión.', false);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Guardar';
+            }
+        }
+
+        function renderOverview() {
+            const container = document.getElementById('overview-container');
+            if (allData.grades.length === 0) {
+                container.innerHTML = '<div class="empty-state">Aún no hay notas registradas.</div>';
+                return;
+            }
+
+            // Group by course
+            const byCourse = {};
+            allData.grades.forEach(g => {
+                const key = g.course_name || `Curso #${g.course_id}`;
+                if (!byCourse[key]) byCourse[key] = [];
+                byCourse[key].push(g);
+            });
+
+            let html = '';
+            Object.entries(byCourse).forEach(([course, grades]) => {
+                let rows = grades.map(g => {
+                    const subj = g.subject_name || '—';
+                    const color = g.value >= 7 ? 'var(--success)' : g.value >= 5 ? 'var(--warning)' : 'var(--danger)';
+                    return `<tr>
+                        <td>${g.student_name}</td>
+                        <td>${subj}</td>
+                        <td>${g.period}</td>
+                        <td>${g.type}</td>
+                        <td><strong style="color:${color}; font-size:1.1rem;">${g.value}</strong></td>
+                        <td>
+                            <button class="save-btn" style="background:#ef4444;" onclick="deleteGrade(${g.id}, this)">🗑️</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                html += `
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📚 ${course}</h4>
+                        <div style="overflow-x:auto;">
+                            <table class="table">
+                                <thead>
+                                    <tr><th>Alumno</th><th>Materia</th><th>Período</th><th>Tipo</th><th>Nota</th><th>Acción</th></tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function deleteGrade(gradeId, btn) {
+            if (!confirm('¿Eliminar esta nota?')) return;
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/professor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'delete_grade', grade_id: gradeId })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showMsg(result.message, true);
+                    await loadData();
+                    renderOverview();
+                } else {
+                    showMsg(result.error || 'Error al eliminar.', false);
+                }
+            } catch (e) {
+                showMsg('Error de conexión.', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        loadData();
     </script>
 </body>
 </html>

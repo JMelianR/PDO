@@ -16,36 +16,88 @@
         .tab-nav button.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .grade-input {
-            width: 70px; padding: 6px 10px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color);
-            border-radius: 6px; color: var(--text-primary); text-align: center; font-size: 0.95rem;
-            outline: none; transition: border-color 0.2s;
-        }
-        .grade-input:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(96,165,250,0.2); }
-        .grade-input:disabled { opacity: 0.4; }
-        .save-btn {
-            padding: 5px 12px; background: var(--accent-primary); color: white; border: none; border-radius: 6px;
-            cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
-        }
-        .save-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Filter row */
         .filter-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-end; }
         .filter-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
         .filter-row label { font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem; font-weight: 500; }
+        select.form-control option { background: #0f172a; }
+
+        /* Stats */
         .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card {
-            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5rem; text-align: center;
-        }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
         .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--accent-primary); }
         .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
-        .badge-primary { background: rgba(96,165,250,0.15); color: var(--accent-primary); }
-        .badge-info { background: rgba(16,185,129,0.15); color: var(--success); }
-        .badge-neutral { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
-        .table { width: 100%; border-collapse: collapse; }
+
+        /* Add evaluation panel */
+        .add-eval-bar {
+            display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+        }
+        .btn-add-eval {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.35);
+            border-radius: 8px; color: var(--accent-primary); cursor: pointer; font-size: 0.9rem;
+            font-weight: 500; transition: all 0.2s;
+        }
+        .btn-add-eval:hover { background: rgba(96,165,250,0.25); }
+        .eval-panel {
+            display: none; background: rgba(15,23,42,0.8); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+            display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+        }
+        .eval-panel.hidden { display: none; }
+        .eval-panel input { flex: 1; min-width: 180px; }
+        .eval-panel .btn-confirm {
+            padding: 8px 18px; background: var(--accent-primary); color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .eval-panel .btn-confirm:hover { opacity: 0.85; }
+        .eval-panel .btn-cancel-sm {
+            padding: 8px 14px; background: transparent; border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+        }
+
+        /* Grade matrix table */
+        .matrix-wrap { overflow-x: auto; }
+        .matrix-table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        .matrix-table th {
+            background: rgba(96,165,250,0.08); color: var(--text-secondary);
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; padding: 10px 14px; text-align: left;
+            border-bottom: 2px solid var(--border-color); white-space: nowrap;
+        }
+        .matrix-table th.eval-col { text-align: center; min-width: 90px; position: relative; }
+        .matrix-table th.eval-col .del-col-btn {
+            display: inline-block; margin-left: 6px; cursor: pointer;
+            color: #ef4444; font-size: 13px; opacity: 0.6; transition: opacity 0.2s;
+            background: none; border: none; padding: 0;
+        }
+        .matrix-table th.eval-col .del-col-btn:hover { opacity: 1; }
+        .matrix-table td {
+            padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04);
+            vertical-align: middle;
+        }
+        .matrix-table tr:last-child td { border-bottom: none; }
+        .matrix-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .student-name-cell { font-weight: 500; white-space: nowrap; }
+
+        /* Grade input cell */
+        .grade-cell { text-align: center; }
+        .grade-input-matrix {
+            width: 68px; padding: 6px 8px;
+            background: rgba(15,23,42,0.6); border: 1px solid var(--border-color);
+            border-radius: 6px; color: var(--text-primary); text-align: center;
+            font-size: 0.95rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .grade-input-matrix:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(96,165,250,0.2); }
+        .grade-input-matrix.saving { border-color: #f59e0b; }
+        .grade-input-matrix.saved  { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        .grade-input-matrix.error  { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
+
+        /* Empty / info states */
         .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); font-size: 1.1rem; }
+        .table { width: 100%; border-collapse: collapse; }
         .alert-info { background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2); color: var(--accent-primary); }
-        select.form-control option { background: #0f172a; }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -100,39 +152,44 @@
         <div id="tab-grades" class="tab-content active">
             <div class="card fade-in">
                 <h3 style="margin-bottom: 1.5rem;">Cargar / Editar Calificaciones</h3>
+
+                <!-- Filtros -->
                 <div class="filter-row">
                     <div class="form-group">
                         <label>Curso</label>
-                        <select id="sel_course" class="form-control" onchange="renderGradeTable()">
+                        <select id="sel_course" class="form-control" onchange="renderMatrix()">
                             <option value="">-- Seleccionar Curso --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Materia</label>
-                        <select id="sel_subject" class="form-control" onchange="renderGradeTable()">
+                        <select id="sel_subject" class="form-control" onchange="renderMatrix()">
                             <option value="">-- Seleccionar Materia --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Período</label>
-                        <select id="sel_period" class="form-control" onchange="renderGradeTable()">
-                            <!-- Populated dynamically by JS -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de Evaluación</label>
-                        <select id="sel_type" class="form-control" onchange="renderGradeTable()">
-                            <option value="Examen Parcial">Examen Parcial</option>
-                            <option value="Trabajo Práctico">Trabajo Práctico</option>
-                            <option value="Examen Final">Examen Final</option>
-                            <option value="Participación">Participación</option>
-                            <option value="Proyecto">Proyecto</option>
+                        <select id="sel_period" class="form-control" onchange="renderMatrix()">
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
                 </div>
 
-                <div id="grade-table-container">
-                    <div class="empty-state">👆 Selecciona un curso y una materia para ver los alumnos</div>
+                <!-- Botón agregar evaluación -->
+                <div class="add-eval-bar" id="add-eval-bar" style="display:none;">
+                    <button class="btn-add-eval" onclick="toggleEvalPanel()">➕ Nueva Evaluación</button>
+                </div>
+
+                <!-- Panel desplegable nueva evaluación -->
+                <div class="eval-panel hidden" id="eval-panel">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem; white-space: nowrap;">Nombre:</span>
+                    <input type="text" id="eval-name-input" class="form-control" placeholder="Ej: Prueba 1, Trabajo 2..." maxlength="50">
+                    <button class="btn-confirm" onclick="addEvaluation()">✔ Agregar</button>
+                    <button class="btn-cancel-sm" onclick="toggleEvalPanel()">Cancelar</button>
+                </div>
+
+                <div id="grade-matrix-container">
+                    <div class="empty-state">👆 Selecciona un curso y una materia para ver la matriz</div>
                 </div>
             </div>
         </div>
@@ -151,29 +208,26 @@
     <script>
         document.getElementById('user-badge-text').textContent = `${user.name} (Profesor)`;
 
-        // Populate period selector with semesters + current year
+        // ── Periods ──────────────────────────────────────────────
         (function populatePeriods() {
             const year = new Date().getFullYear();
             const sel = document.getElementById('sel_period');
-            const options = [
-                { value: `Semestre 1 - ${year}`, label: `Semestre 1 - ${year}` },
-                { value: `Semestre 2 - ${year}`, label: `Semestre 2 - ${year}` },
-                { value: `Recuperatorio - ${year}`, label: `Recuperatorio - ${year}` }
-            ];
-            options.forEach(o => {
-                const opt = document.createElement('option');
-                opt.value = o.value;
-                opt.textContent = o.label;
-                sel.appendChild(opt);
+            [
+                `Semestre 1 - ${year}`,
+                `Semestre 2 - ${year}`,
+                `Recuperatorio - ${year}`
+            ].forEach(v => {
+                const o = document.createElement('option');
+                o.value = o.textContent = v;
+                sel.appendChild(o);
             });
         })();
 
+        // ── State ────────────────────────────────────────────────
         let allData = { subjects: [], courses: [], students: [], grades: [] };
+        let debounceTimers = {};   // key: "studentId_evalType"
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/index.html';
-        }
+        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -191,138 +245,414 @@
             setTimeout(() => el.style.display = 'none', 3500);
         }
 
-        async function loadData() {
+        // ── Load Data ────────────────────────────────────────────
+        async function loadData(silent = false) {
             try {
-                const res = await fetch('/api/professor', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch('/api/professor', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (res.status === 401 || res.status === 403) { logout(); return; }
-                if (!res.ok) {
-                    const err = await res.json();
-                    showMsg('Error cargando datos: ' + (err.error || res.status), false);
-                    return;
-                }
+                if (!res.ok) { const e = await res.json(); showMsg(e.error || 'Error', false); return; }
                 allData = await res.json();
 
                 document.getElementById('welcome-msg').textContent =
                     `Tienes ${allData.subjects.length} materia(s) asignada(s) y ${allData.students.length} alumno(s) en el sistema.`;
-
-                // Stats
                 document.getElementById('stat-subjects').textContent = allData.subjects.length;
                 document.getElementById('stat-courses').textContent = allData.courses.length;
                 document.getElementById('stat-students').textContent = allData.students.length;
                 document.getElementById('stat-grades').textContent = allData.grades.length;
                 document.getElementById('stat-grid').style.display = 'grid';
 
-                // Populate selects
-                const selCourse = document.getElementById('sel_course');
-                selCourse.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
+                // Populate selects (preserve current selection)
+                const curCourse  = document.getElementById('sel_course').value;
+                const curSubject = document.getElementById('sel_subject').value;
+
+                const sc = document.getElementById('sel_course');
+                sc.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
                 allData.courses.forEach(c => {
-                    selCourse.innerHTML += `<option value="${c.id}">${c.nombre} (${c.anio} ${c.division})</option>`;
+                    sc.innerHTML += `<option value="${c.id}">${c.nombre} (${c.anio}° ${c.division})</option>`;
                 });
+                if (curCourse) sc.value = curCourse;
 
-                const selSubject = document.getElementById('sel_subject');
-                selSubject.innerHTML = '<option value="">-- Seleccionar Materia --</option>';
+                const ss = document.getElementById('sel_subject');
+                ss.innerHTML = '<option value="">-- Seleccionar Materia --</option>';
                 allData.subjects.forEach(s => {
-                    selSubject.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
+                    ss.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
                 });
+                if (curSubject) ss.value = curSubject;
 
-                if (allData.subjects.length === 0) {
-                    showMsg('No tienes materias asignadas. Contacta al administrador.', false);
-                }
-
-                renderGradeTable();
-            } catch (err) {
-                showMsg('Error de conexión: ' + err.message, false);
-            }
+                if (!silent) renderMatrix();
+            } catch (err) { showMsg('Error de conexión: ' + err.message, false); }
         }
 
-        function renderGradeTable() {
-            const courseId = document.getElementById('sel_course').value;
-            const subjectId = document.getElementById('sel_subject').value;
-            const period = document.getElementById('sel_period').value;
-            const type = document.getElementById('sel_type').value;
-            const container = document.getElementById('grade-table-container');
+        // ── Helpers: comma format ────────────────────────────────
+        // Parse "5,3" or "5.3" → 5.3
+        function parseGrade(str) {
+            return parseFloat(String(str).replace(',', '.'));
+        }
+        // Display 5.3 → "5,3"
+        function formatGrade(val) {
+            if (val === null || val === undefined || val === '') return '';
+            return String(val).replace('.', ',');
+        }
 
-            if (!courseId) {
-                container.innerHTML = '<div class="empty-state">👆 Selecciona un curso y una materia para ver los alumnos</div>';
+        // ── Get current context ───────────────────────────────────
+        function getContext() {
+            return {
+                courseId:  document.getElementById('sel_course').value,
+                subjectId: document.getElementById('sel_subject').value,
+                period:    document.getElementById('sel_period').value,
+            };
+        }
+
+        // Get distinct evaluation types present for the current context
+        function getEvalColumns(courseId, subjectId, period) {
+            const seen = new Set();
+            const cols = [];
+            allData.grades.forEach(g => {
+                if (String(g.course_id) === String(courseId) &&
+                    String(g.subject_id) === String(subjectId) &&
+                    g.period === period) {
+                    if (!seen.has(g.type)) { seen.add(g.type); cols.push(g.type); }
+                }
+            });
+            return cols;
+        }
+
+        // ── Render Matrix ────────────────────────────────────────
+        function renderMatrix() {
+            const { courseId, subjectId, period } = getContext();
+            const container = document.getElementById('grade-matrix-container');
+            const addBar    = document.getElementById('add-eval-bar');
+
+            if (!courseId || !subjectId) {
+                container.innerHTML = '<div class="empty-state">👆 Selecciona un curso y una materia para ver la matriz</div>';
+                addBar.style.display = 'none';
                 return;
             }
 
             const students = allData.students.filter(s => String(s.course_id) === String(courseId));
-
             if (students.length === 0) {
                 container.innerHTML = '<div class="empty-state">No hay alumnos inscritos en este curso.</div>';
+                addBar.style.display = 'none';
                 return;
             }
 
-            let rows = '';
-            students.forEach(s => {
-                const existingGrade = allData.grades.find(g =>
-                    String(g.student_id) === String(s.id) &&
-                    String(g.course_id) === String(courseId) &&
-                    g.period === period &&
-                    g.type === type &&
-                    (subjectId ? String(g.subject_id) === String(subjectId) : !g.subject_id)
-                );
-                const gradeVal = existingGrade ? existingGrade.value : '';
-                const gradeId = existingGrade ? existingGrade.id : '';
+            addBar.style.display = 'flex';
+            const evalCols = getEvalColumns(courseId, subjectId, period);
 
-                rows += `<tr>
-                    <td>${s.apellido}, ${s.nombre}</td>
-                    <td><span style="color:var(--text-secondary);font-size:0.85rem;">${s.username}</span></td>
-                    <td>
+            if (evalCols.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:2rem;">
+                        Sin evaluaciones creadas para este período.<br>
+                        <span style="font-size:0.85rem; color:var(--text-secondary);">Usa el botón "➕ Nueva Evaluación" para agregar una columna.</span>
+                    </div>`;
+                return;
+            }
+
+            // Build header
+            let headCols = evalCols.map(t => `
+                <th class="eval-col">
+                    ${escHtml(t)}
+                    <button class="del-col-btn" title="Eliminar evaluación" onclick="deleteEvalColumn('${escAttr(t)}')">✕</button>
+                </th>`).join('') +
+                `<th class="eval-col" style="background:rgba(16,185,129,0.1); color:var(--success); border-left: 2px solid rgba(16,185,129,0.3);">Promedio</th>`;
+
+            // Build rows
+            let bodyRows = students.map(s => {
+                const gradeValues = [];
+                let cells = evalCols.map(evalType => {
+                    const g = allData.grades.find(x =>
+                        String(x.student_id) === String(s.id) &&
+                        String(x.course_id)  === String(courseId) &&
+                        String(x.subject_id) === String(subjectId) &&
+                        x.period === period &&
+                        x.type   === evalType
+                    );
+                    const val = g ? formatGrade(g.value) : '';
+                    if (g && g.value !== null && g.value !== undefined) gradeValues.push(parseFloat(g.value));
+                    const gId = g ? g.id : '';
+                    const safeType = escAttr(evalType);
+                    return `<td class="grade-cell">
                         <input
-                            type="number" min="0" max="10" step="0.5"
-                            class="grade-input"
-                            id="grade_${s.id}"
-                            value="${gradeVal}"
+                            type="text"
+                            class="grade-input-matrix"
+                            value="${val}"
                             placeholder="—"
-                            data-grade-id="${gradeId}"
-                        />
-                    </td>
-                    <td>
-                        <button class="save-btn" onclick="saveGrade(${s.id}, '${courseId}', '${subjectId || ''}', '${period}', '${type}', this)">
-                            💾 Guardar
-                        </button>
-                    </td>
+                            data-student="${s.id}"
+                            data-eval="${safeType}"
+                            data-grade-id="${gId}"
+                            oninput="scheduleAutoSave(this, '${s.id}', '${escAttr(courseId)}', '${escAttr(subjectId)}', '${escAttr(period)}', '${safeType}')"
+                            onblur="flushSave(this, '${s.id}', '${escAttr(courseId)}', '${escAttr(subjectId)}', '${escAttr(period)}', '${safeType}')"
+                        >
+                    </td>`;
+                }).join('');
+
+                let promedioCell;
+                if (gradeValues.length === 0) {
+                    promedioCell = `<td style="text-align:center; color:var(--text-secondary); border-left:2px solid rgba(16,185,129,0.3);">—</td>`;
+                } else {
+                    const avg = gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length;
+                    const color = avg >= 5 ? 'var(--success)' : avg >= 4 ? 'var(--warning)' : 'var(--danger)';
+                    promedioCell = `<td style="text-align:center; border-left:2px solid rgba(16,185,129,0.3);">
+                        <strong style="color:${color}; font-size:1rem;">${formatGrade(avg.toFixed(1))}</strong>
+                    </td>`;
+                }
+
+                return `<tr>
+                    <td class="student-name-cell">${escHtml(s.apellido)}, ${escHtml(s.nombre)}</td>
+                    ${cells}
+                    ${promedioCell}
                 </tr>`;
-            });
+            }).join('');
 
             container.innerHTML = `
-                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">
-                    Mostrando <strong>${students.length}</strong> alumno(s) — ingresa una nota del 0 al 10 y guarda individualmente.
-                </p>
-                <div style="overflow-x:auto;">
-                    <table class="table">
-                        <thead><tr><th>Alumno</th><th>Usuario</th><th>Nota (0-10)</th><th>Acción</th></tr></thead>
-                        <tbody>${rows}</tbody>
+                <div class="matrix-wrap">
+                    <table class="matrix-table">
+                        <thead><tr>
+                            <th style="min-width:160px;">Alumno</th>
+                            ${headCols}
+                        </tr></thead>
+                        <tbody>${bodyRows}</tbody>
                     </table>
-                </div>`;
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.75rem;">
+                    ✅ Las notas se guardan automáticamente. Formato: <strong>X,X</strong> (del 1,0 al 7,0)
+                </p>`;
         }
 
-        async function saveGrade(studentId, courseId, subjectId, period, type, btn) {
-            const input = document.getElementById(`grade_${studentId}`);
-            const value = input.value;
+        // ── Eval panel toggle ────────────────────────────────────
+        function toggleEvalPanel() {
+            const panel = document.getElementById('eval-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                document.getElementById('eval-name-input').focus();
+            }
+        }
 
-            if (value === '' || isNaN(parseFloat(value))) {
-                showMsg('Ingresa un número válido entre 0 y 10.', false);
+        // Enter key on eval name input
+        document.getElementById('eval-name-input').addEventListener('keyup', e => {
+            if (e.key === 'Enter') addEvaluation();
+            if (e.key === 'Escape') toggleEvalPanel();
+        });
+
+        // Add a new evaluation column by saving an empty placeholder grade for each student
+        async function addEvaluation() {
+            const name = document.getElementById('eval-name-input').value.trim();
+            if (!name) { showMsg('Escribe un nombre para la evaluación.', false); return; }
+
+            const { courseId, subjectId, period } = getContext();
+            const students = allData.students.filter(s => String(s.course_id) === String(courseId));
+
+            if (!courseId || !subjectId) { showMsg('Selecciona curso y materia.', false); return; }
+
+            // Check duplicate
+            const existing = getEvalColumns(courseId, subjectId, period);
+            if (existing.includes(name)) { showMsg('Ya existe una evaluación con ese nombre.', false); return; }
+
+            // Create one empty grade per student to register the column
+            // We send value=null which the backend should accept, or we just flag with 0 temporarily
+            // Actually we just mark the column in a local registry and save grade on input.
+            // Simpler: insert a sentinel grade with value null for each student.
+            // The backend save_grade action uses INSERT OR REPLACE, so let's use it.
+            // We'll insert with value = null (no grade yet) via a dedicated action OR
+            // we locally add the column and let auto-save handle it per student.
+
+            // Local approach: just register the column name locally so it appears in the matrix
+            // without making any API calls until the teacher actually enters a grade.
+            allData._extraCols = allData._extraCols || {};
+            const key = `${courseId}|${subjectId}|${period}`;
+            if (!allData._extraCols[key]) allData._extraCols[key] = [];
+            if (!allData._extraCols[key].includes(name)) allData._extraCols[key].push(name);
+
+            document.getElementById('eval-name-input').value = '';
+            toggleEvalPanel();
+            renderMatrixWithExtras();
+        }
+
+        // Extended render that includes locally added columns not yet in DB
+        function getEvalColumnsWithExtras(courseId, subjectId, period) {
+            const cols = getEvalColumns(courseId, subjectId, period);
+            const key = `${courseId}|${subjectId}|${period}`;
+            const extras = (allData._extraCols && allData._extraCols[key]) || [];
+            extras.forEach(e => { if (!cols.includes(e)) cols.push(e); });
+            return cols;
+        }
+
+        function renderMatrixWithExtras() {
+            const { courseId, subjectId, period } = getContext();
+            const container = document.getElementById('grade-matrix-container');
+            const addBar    = document.getElementById('add-eval-bar');
+
+            if (!courseId || !subjectId) {
+                container.innerHTML = '<div class="empty-state">👆 Selecciona un curso y una materia para ver la matriz</div>';
+                addBar.style.display = 'none';
                 return;
             }
 
-            btn.disabled = true;
-            btn.textContent = '⏳';
+            const students = allData.students.filter(s => String(s.course_id) === String(courseId));
+            if (students.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay alumnos inscritos en este curso.</div>';
+                addBar.style.display = 'none';
+                return;
+            }
+
+            addBar.style.display = 'flex';
+            const evalCols = getEvalColumnsWithExtras(courseId, subjectId, period);
+
+            if (evalCols.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:2rem;">
+                        Sin evaluaciones creadas para este período.<br>
+                        <span style="font-size:0.85rem; color:var(--text-secondary);">Usa el botón "➕ Nueva Evaluación" para agregar una columna.</span>
+                    </div>`;
+                return;
+            }
+
+            let headCols = evalCols.map(t => `
+                <th class="eval-col">
+                    ${escHtml(t)}
+                    <button class="del-col-btn" title="Eliminar evaluación" onclick="deleteEvalColumnWithExtras('${escAttr(t)}')">✕</button>
+                </th>`).join('') +
+                `<th class="eval-col" style="background:rgba(16,185,129,0.1); color:var(--success); border-left: 2px solid rgba(16,185,129,0.3);">Promedio</th>`;
+
+            let bodyRows = students.map(s => {
+                const gradeValues = [];
+                let cells = evalCols.map(evalType => {
+                    const g = allData.grades.find(x =>
+                        String(x.student_id) === String(s.id) &&
+                        String(x.course_id)  === String(courseId) &&
+                        String(x.subject_id) === String(subjectId) &&
+                        x.period === period &&
+                        x.type   === evalType
+                    );
+                    const val = g ? formatGrade(g.value) : '';
+                    if (g && g.value !== null && g.value !== undefined) gradeValues.push(parseFloat(g.value));
+                    const gId = g ? g.id : '';
+                    const safeType = escAttr(evalType);
+                    return `<td class="grade-cell">
+                        <input
+                            type="text"
+                            class="grade-input-matrix"
+                            value="${val}"
+                            placeholder="—"
+                            data-student="${s.id}"
+                            data-eval="${safeType}"
+                            data-grade-id="${gId}"
+                            oninput="scheduleAutoSave(this, '${s.id}', '${escAttr(courseId)}', '${escAttr(subjectId)}', '${escAttr(period)}', '${safeType}')"
+                            onblur="flushSave(this, '${s.id}', '${escAttr(courseId)}', '${escAttr(subjectId)}', '${escAttr(period)}', '${safeType}')"
+                        >
+                    </td>`;
+                }).join('');
+
+                let promedioCell;
+                if (gradeValues.length === 0) {
+                    promedioCell = `<td style="text-align:center; color:var(--text-secondary); border-left:2px solid rgba(16,185,129,0.3);">—</td>`;
+                } else {
+                    const avg = gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length;
+                    const color = avg >= 5 ? 'var(--success)' : avg >= 4 ? 'var(--warning)' : 'var(--danger)';
+                    promedioCell = `<td style="text-align:center; border-left:2px solid rgba(16,185,129,0.3);">
+                        <strong style="color:${color}; font-size:1rem;">${formatGrade(avg.toFixed(1))}</strong>
+                    </td>`;
+                }
+
+                return `<tr>
+                    <td class="student-name-cell">${escHtml(s.apellido)}, ${escHtml(s.nombre)}</td>
+                    ${cells}
+                    ${promedioCell}
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="matrix-wrap">
+                    <table class="matrix-table">
+                        <thead><tr>
+                            <th style="min-width:160px;">Alumno</th>
+                            ${headCols}
+                        </tr></thead>
+                        <tbody>${bodyRows}</tbody>
+                    </table>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.75rem;">
+                    ✅ Las notas se guardan automáticamente. Formato: <strong>X,X</strong> (del 1,0 al 7,0)
+                </p>`;
+        }
+
+        // Override renderMatrix to use extras version
+        function renderMatrix() { renderMatrixWithExtras(); }
+
+        // ── Delete evaluation column ──────────────────────────────
+        async function deleteEvalColumnWithExtras(evalType) {
+            const { courseId, subjectId, period } = getContext();
+            if (!confirm(`¿Eliminar la evaluación "${evalType}" y todas sus notas?`)) return;
+
+            // Remove from extras if present
+            const key = `${courseId}|${subjectId}|${period}`;
+            if (allData._extraCols && allData._extraCols[key]) {
+                allData._extraCols[key] = allData._extraCols[key].filter(e => e !== evalType);
+            }
+
+            // Delete grades from DB that match this column
+            const gradesInCol = allData.grades.filter(g =>
+                String(g.course_id)  === String(courseId) &&
+                String(g.subject_id) === String(subjectId) &&
+                g.period === period && g.type === evalType
+            );
+
+            for (const g of gradesInCol) {
+                await fetch('/api/professor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'delete_grade', grade_id: g.id })
+                });
+            }
+
+            await loadData(true);
+            renderMatrix();
+        }
+
+        // ── Auto-save logic ───────────────────────────────────────
+        function scheduleAutoSave(input, studentId, courseId, subjectId, period, evalType) {
+            const key = `${studentId}_${evalType}`;
+            clearTimeout(debounceTimers[key]);
+            input.classList.remove('saved', 'error');
+            input.classList.add('saving');
+            debounceTimers[key] = setTimeout(() => doSave(input, studentId, courseId, subjectId, period, evalType), 700);
+        }
+
+        function flushSave(input, studentId, courseId, subjectId, period, evalType) {
+            const key = `${studentId}_${evalType}`;
+            if (debounceTimers[key]) {
+                clearTimeout(debounceTimers[key]);
+                doSave(input, studentId, courseId, subjectId, period, evalType);
+            }
+        }
+
+        async function doSave(input, studentId, courseId, subjectId, period, evalType) {
+            const rawVal = input.value.trim();
+            if (rawVal === '' || rawVal === '—') {
+                input.classList.remove('saving');
+                return; // Nothing to save
+            }
+
+            const num = parseGrade(rawVal);
+            if (isNaN(num) || num < 1 || num > 7) {
+                input.classList.remove('saving');
+                input.classList.add('error');
+                return;
+            }
+
+            // Normalize display to comma format
+            input.value = formatGrade(num.toFixed(1));
 
             try {
                 const payload = {
                     action: 'save_grade',
-                    student_id: studentId,
-                    course_id: courseId,
+                    student_id: parseInt(studentId),
+                    course_id:  parseInt(courseId),
                     period,
-                    type,
-                    value: parseFloat(value)
+                    type: evalType,
+                    value: num
                 };
-                if (subjectId) payload.subject_id = subjectId;
+                if (subjectId) payload.subject_id = parseInt(subjectId);
 
                 const res = await fetch('/api/professor', {
                     method: 'POST',
@@ -330,20 +660,26 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await res.json();
+
                 if (res.ok) {
-                    showMsg(result.message, true);
-                    await loadData(); // Reload to sync
+                    input.classList.remove('saving');
+                    input.classList.add('saved');
+                    setTimeout(() => input.classList.remove('saved'), 1500);
+                    // Silently refresh data (update gradeId and stats)
+                    await loadData(true);
+                    // Re-render only the stat number without rebuilding the matrix
                 } else {
+                    input.classList.remove('saving');
+                    input.classList.add('error');
                     showMsg(result.error || 'Error al guardar', false);
                 }
             } catch (e) {
-                showMsg('Error de conexión.', false);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '💾 Guardar';
+                input.classList.remove('saving');
+                input.classList.add('error');
             }
         }
 
+        // ── Overview Tab ─────────────────────────────────────────
         function renderOverview() {
             const container = document.getElementById('overview-container');
             if (allData.grades.length === 0) {
@@ -351,40 +687,45 @@
                 return;
             }
 
-            // Group by course
-            const byCourse = {};
+            // Group by course → subject → student (matrix per course/subject)
+            const byCS = {};
             allData.grades.forEach(g => {
-                const key = g.course_name || `Curso #${g.course_id}`;
-                if (!byCourse[key]) byCourse[key] = [];
-                byCourse[key].push(g);
+                const csKey = `${g.course_name || 'Curso #' + g.course_id}||${g.subject_name || 'Sin materia'}`;
+                if (!byCS[csKey]) byCS[csKey] = [];
+                byCS[csKey].push(g);
             });
 
             let html = '';
-            Object.entries(byCourse).forEach(([course, grades]) => {
-                let rows = grades.map(g => {
-                    const subj = g.subject_name || '—';
-                    const color = g.value >= 7 ? 'var(--success)' : g.value >= 5 ? 'var(--warning)' : 'var(--danger)';
-                    return `<tr>
-                        <td>${g.student_name}</td>
-                        <td>${subj}</td>
-                        <td>${g.period}</td>
-                        <td>${g.type}</td>
-                        <td><strong style="color:${color}; font-size:1.1rem;">${g.value}</strong></td>
-                        <td>
-                            <button class="save-btn" style="background:#ef4444;" onclick="deleteGrade(${g.id}, this)">🗑️</button>
-                        </td>
-                    </tr>`;
+            Object.entries(byCS).forEach(([csKey, grades]) => {
+                const [courseName, subjectName] = csKey.split('||');
+
+                // Columns = unique (period + type)
+                const colKeys = [...new Set(grades.map(g => `${g.period}||${g.type}`))];
+                const colLabels = colKeys.map(k => { const [p, t] = k.split('||'); return `${t}<br><small style="font-weight:400;color:var(--text-secondary)">${p}</small>`; });
+
+                // Rows = unique students
+                const studentNames = [...new Set(grades.map(g => g.student_name))].sort();
+
+                let headCols = colLabels.map(l => `<th style="text-align:center; min-width:90px;">${l}</th>`).join('');
+                let bodyRows = studentNames.map(sName => {
+                    let cells = colKeys.map(ck => {
+                        const [p, t] = ck.split('||');
+                        const g = grades.find(x => x.student_name === sName && x.period === p && x.type === t);
+                        if (!g) return '<td style="text-align:center; color:var(--text-secondary);">—</td>';
+                        const color = g.value >= 5 ? 'var(--success)' : g.value >= 4 ? 'var(--warning)' : 'var(--danger)';
+                        return `<td style="text-align:center;"><strong style="color:${color};">${formatGrade(g.value)}</strong></td>`;
+                    }).join('');
+                    return `<tr><td style="white-space:nowrap;">${escHtml(sName)}</td>${cells}</tr>`;
                 }).join('');
 
                 html += `
-                    <div style="margin-bottom: 2rem;">
-                        <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📚 ${course}</h4>
+                    <div style="margin-bottom:2rem;">
+                        <h4 style="color:var(--accent-primary); margin-bottom:0.25rem;">📚 ${escHtml(courseName)}</h4>
+                        <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">📖 ${escHtml(subjectName)}</p>
                         <div style="overflow-x:auto;">
-                            <table class="table">
-                                <thead>
-                                    <tr><th>Alumno</th><th>Materia</th><th>Período</th><th>Tipo</th><th>Nota</th><th>Acción</th></tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
+                            <table class="table matrix-table">
+                                <thead><tr><th>Alumno</th>${headCols}</tr></thead>
+                                <tbody>${bodyRows}</tbody>
                             </table>
                         </div>
                     </div>`;
@@ -393,28 +734,12 @@
             container.innerHTML = html;
         }
 
-        async function deleteGrade(gradeId, btn) {
-            if (!confirm('¿Eliminar esta nota?')) return;
-            btn.disabled = true;
-            try {
-                const res = await fetch('/api/professor', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action: 'delete_grade', grade_id: gradeId })
-                });
-                const result = await res.json();
-                if (res.ok) {
-                    showMsg(result.message, true);
-                    await loadData();
-                    renderOverview();
-                } else {
-                    showMsg(result.error || 'Error al eliminar.', false);
-                }
-            } catch (e) {
-                showMsg('Error de conexión.', false);
-            } finally {
-                btn.disabled = false;
-            }
+        // ── Utilities ─────────────────────────────────────────────
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+        function escAttr(s) {
+            return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
         }
 
         loadData();

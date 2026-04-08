@@ -53,7 +53,7 @@ exports.handler = async (event) => {
         yearClosuresResult = await db.execute(
           'SELECT * FROM year_closures ORDER BY year DESC, closed_at DESC'
         );
-      } catch (_) {}
+      } catch (_) { }
 
       return {
         statusCode: 200,
@@ -287,9 +287,9 @@ exports.handler = async (event) => {
         `);
 
         // 2. Count active records for summary
-        const gradeCount   = await db.execute('SELECT COUNT(*) as n FROM grades');
+        const gradeCount = await db.execute('SELECT COUNT(*) as n FROM grades');
         const studentCount = await db.execute('SELECT COUNT(*) as n FROM students');
-        const courseCount  = await db.execute('SELECT COUNT(*) as n FROM courses');
+        const courseCount = await db.execute('SELECT COUNT(*) as n FROM courses');
 
         // 3. Insert closure record
         const closureResult = await db.execute({
@@ -350,7 +350,7 @@ exports.handler = async (event) => {
         await db.execute('DELETE FROM grades');
         await db.execute('DELETE FROM students');
         await db.execute('DELETE FROM course_professor');
-        try { await db.execute('DELETE FROM course_evaluations'); } catch (_) {}
+        try { await db.execute('DELETE FROM course_evaluations'); } catch (_) { }
 
         return {
           statusCode: 200,
@@ -358,9 +358,9 @@ exports.handler = async (event) => {
             message: `Año escolar ${year} cerrado exitosamente`,
             closure_id: Number(closureId),
             stats: {
-              grades_archived:   Number(gradeCount.rows[0].n),
+              grades_archived: Number(gradeCount.rows[0].n),
               students_unenrolled: Number(studentCount.rows[0].n),
-              courses_cleared:   Number(courseCount.rows[0].n),
+              courses_cleared: Number(courseCount.rows[0].n),
             }
           })
         };

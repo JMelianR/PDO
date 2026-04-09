@@ -46,6 +46,15 @@ exports.handler = async (event) => {
         JOIN courses c ON cp.course_id = c.id
         ORDER BY c.nombre ASC, u.nombre ASC
       `);
+      const schedulesResult = await db.execute(`
+        SELECT sc.*, c.nombre as course_name, c.anio || ' ' || c.division as course_data, 
+               s.nombre as subject_name, u.nombre || ' ' || u.apellido as professor_name 
+        FROM schedules sc 
+        JOIN courses c ON sc.course_id = c.id 
+        JOIN subjects s ON sc.subject_id = s.id 
+        JOIN users u ON sc.professor_id = u.id
+        ORDER BY sc.day_of_week, sc.start_time
+      `);
 
       // Year closure history (table may not exist yet)
       let yearClosuresResult = { rows: [] };
@@ -68,6 +77,7 @@ exports.handler = async (event) => {
           grades: gradesResult.rows,
           course_professors: courseProfessorsResult.rows,
           year_closures: yearClosuresResult.rows,
+          schedules: schedulesResult.rows,
         })
       };
     } catch (error) {
@@ -382,6 +392,25 @@ exports.handler = async (event) => {
           statusCode: 200,
           body: JSON.stringify({ grades: grades.rows, enrollments: enrollments.rows })
         };
+      }
+
+      if (action === 'create_schedule') {
+        const { course_id, subject_id, professor_id, day_of_week, start_time, end_time } = body;
+        if (!course_id || !subject_id || !professor_id || !day_of_week || !start_time || !end_time) {
+          return { statusCode: 400, body: JSON.stringify({ error: 'Todos los campos son obligatorios' }) };
+        }
+        await db.execute({
+          sql: 'INSERT INTO schedules (course_id, subject_id, professor_id, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)',
+          args: [course_id, subject_id, professor_id, day_of_week, start_time, end_time]
+        });
+        return { statusCode: 200, body: JSON.stringify({ message: 'Horario creado exitosamente' }) };
+      }
+
+      if (action === 'delete_schedule') {
+        const { schedule_id } = body;
+        if (!schedule_id) return { statusCode: 400, body: JSON.stringify({ error: 'ID de horario requerido' }) };
+        await db.execute({ sql: 'DELETE FROM schedules WHERE id = ?', args: [schedule_id] });
+        return { statusCode: 200, body: JSON.stringify({ message: 'Horario eliminado exitosamente' }) };
       }
 
       return { statusCode: 400, body: JSON.stringify({ error: 'Acción no soportada' }) };

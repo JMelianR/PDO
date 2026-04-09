@@ -7,13 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card {
-            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5rem; text-align: center;
-        }
-        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--accent-primary); }
-        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
         .grade-pill {
             display: inline-block; padding: 4px 12px; border-radius: 20px;
             font-weight: 700; font-size: 1rem; min-width: 50px; text-align: center;
@@ -42,6 +35,40 @@
             border-radius: 3px; overflow: hidden; margin-top: 4px;
         }
         .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+        /* Schedule specific styles */
+        .schedule-tabs { display: flex; gap: 8px; margin-bottom: 1rem; }
+        .schedule-tabs button {
+            padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;
+        }
+        .schedule-tabs button.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+        .schedule-content { display: none; }
+        .schedule-content.active { display: block; }
+        .weekly-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .day-column { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; }
+        .day-name { font-weight: 700; color: var(--accent-primary); margin-bottom: 0.8rem; text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-size: 0.9rem; }
+        .schedule-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 0.75rem; margin-bottom: 0.5rem; font-size: 0.82rem;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .schedule-time { font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 2px; }
+        .schedule-subj { font-weight: 500; color: var(--text-primary); }
+        .schedule-prof { color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 4px; }
+        .daily-list { display: flex; flex-direction: column; gap: 10px; }
+        .daily-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        .daily-time-box {
+            background: rgba(96,165,250,0.1); border-radius: 8px; padding: 0.5rem 0.75rem;
+            text-align: center; min-width: 90px;
+        }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -60,29 +87,33 @@
 
     <main class="container fade-in">
         <div style="margin-bottom: 2rem;">
-            <h2>Mi Boletín 🎒</h2>
-            <p id="welcome-msg">Cargando tus calificaciones...</p>
+            <h2>Información Académica</h2>
+            <div id="student-name-display" style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 4px;"></div>
+            <div id="student-course-display" style="font-size: 0.85rem; color: var(--accent-primary); font-weight: 600; margin-top: 2px;"></div>
+            <p id="welcome-msg" style="display:none;"></p>
         </div>
 
         <div id="messages" class="alert" style="display:none; margin-bottom:1rem;"></div>
 
-        <!-- Stats -->
-        <div class="stat-grid" id="stat-grid" style="display:none;">
-            <div class="stat-card">
-                <div class="stat-number" id="stat-courses">0</div>
-                <div class="stat-label">Cursos Inscripto</div>
+        <!-- Horarios Section -->
+        <div class="card fade-in" style="margin-bottom: 2.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin:0;">📅 Mi Horario</h3>
+                <div class="schedule-tabs">
+                    <button id="btn-weekly" class="active" onclick="switchScheduleView('weekly')">Semanal</button>
+                    <button id="btn-daily" onclick="switchScheduleView('daily')">Diario</button>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="stat-grades">0</div>
-                <div class="stat-label">Calificaciones</div>
+            
+            <div id="view-weekly" class="schedule-content active">
+                <div class="weekly-grid" id="weekly-container">
+                    <p class="empty-state">Cargando horario...</p>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="stat-avg">—</div>
-                <div class="stat-label">Promedio General</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="stat-status">—</div>
-                <div class="stat-label">Estado Académico</div>
+            <div id="view-daily" class="schedule-content">
+                <div class="daily-list" id="daily-container">
+                    <p class="empty-state">Cargando horario...</p>
+                </div>
             </div>
         </div>
 
@@ -133,29 +164,107 @@
                 }
                 const data = await res.json();
                 renderPage(data);
+                renderSchedule(data.schedules || []);
             } catch (err) {
                 showMsg('Error de conexión: ' + err.message, false);
+            }
+        }
+
+        function switchScheduleView(view) {
+            document.querySelectorAll('.schedule-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.schedule-tabs button').forEach(b => b.classList.remove('active'));
+            
+            if (view === 'weekly') {
+                document.getElementById('view-weekly').classList.add('active');
+                document.getElementById('btn-weekly').classList.add('active');
+            } else {
+                document.getElementById('view-daily').classList.add('active');
+                document.getElementById('btn-daily').classList.add('active');
+            }
+        }
+
+        function renderSchedule(schedules) {
+            const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+            const weeklyContainer = document.getElementById('weekly-container');
+            const dailyContainer = document.getElementById('daily-container');
+
+            if (schedules.length === 0) {
+                const empty = '<p class="empty-state">No hay horarios definidos aún.</p>';
+                weeklyContainer.innerHTML = empty;
+                dailyContainer.innerHTML = empty;
+                return;
+            }
+
+            // --- Render Weekly ---
+            let weeklyHtml = '';
+            days.forEach(day => {
+                const dayScheds = schedules.filter(s => s.day_of_week === day)
+                    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+                
+                let cardsHtml = dayScheds.map(s => `
+                    <div class="schedule-card slide-in">
+                        <span class="schedule-time">${s.start_time} - ${s.end_time}</span>
+                        <div class="schedule-subj">${s.subject_name}</div>
+                        <span class="schedule-prof">👨‍🏫 ${s.professor_name}</span>
+                    </div>
+                `).join('');
+                
+                if (dayScheds.length === 0) cardsHtml = '<p style="font-size:0.75rem; color:var(--text-secondary); text-align:center;">Sin clases</p>';
+
+                weeklyHtml += `
+                    <div class="day-column">
+                        <div class="day-name">${day}</div>
+                        ${cardsHtml}
+                    </div>
+                `;
+            });
+            weeklyContainer.innerHTML = weeklyHtml;
+
+            // --- Render Daily ---
+            const todayIndex = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+            const dayMap = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 0: 'Domingo' };
+            const todayName = dayMap[todayIndex];
+            
+            const todayScheds = schedules.filter(s => s.day_of_week === todayName)
+                .sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            if (todayScheds.length === 0) {
+                dailyContainer.innerHTML = `<div class="empty-state">No tienes clases programadas para hoy (${todayName}).</div>`;
+            } else {
+                dailyContainer.innerHTML = `
+                    <h4 style="margin-bottom:1rem; color:var(--accent-primary);">Clases para hoy (${todayName})</h4>
+                    ${todayScheds.map(s => `
+                        <div class="daily-item slide-in">
+                            <div class="daily-time-box">
+                                <div style="font-size:1rem; font-weight:700; color:var(--accent-primary);">${s.start_time}</div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary);">${s.end_time}</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">${s.subject_name}</div>
+                                <div style="font-size:0.85rem; color:var(--text-secondary);">👨‍🏫 Profesor: ${s.professor_name}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
             }
         }
 
         function renderPage(data) {
             const { courses, grades } = data;
 
-            // Stats
-            const allValues = grades.map(g => g.value).filter(v => v !== null && v !== undefined);
-            const avg = allValues.length > 0 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length) : null;
-            const avgStr = avg !== null ? avg.toFixed(1) : '—';
-            const failing = allValues.filter(v => v < 5).length;
-            const statusStr = allValues.length === 0 ? '—' : (failing === 0 ? '✅ Regular' : `⚠️ ${failing} baja(s)`);
+            // Header info
+            document.getElementById('student-name-display').textContent = user.name;
+            if (courses.length > 0) {
+                document.getElementById('student-course-display').textContent = `${courses[0].nombre} (${courses[0].anio} - ${courses[0].division})`;
+            } else {
+                document.getElementById('student-course-display').textContent = 'Sin curso asignado';
+                document.getElementById('student-course-display').style.color = 'var(--danger)';
+            }
 
-            document.getElementById('stat-courses').textContent = courses.length;
-            document.getElementById('stat-grades').textContent = grades.length;
-            document.getElementById('stat-avg').textContent = avgStr;
-            document.getElementById('stat-status').textContent = allValues.length === 0 ? '—' : (failing === 0 ? '✅' : `⚠️ ${failing}`);
-            document.getElementById('stat-grid').style.display = 'grid';
+            const allValues = grades.map(g => g.value).filter(v => v !== null && v !== undefined);
 
             document.getElementById('welcome-msg').textContent = courses.length > 0
-                ? `Estás inscripto en ${courses.length} curso(s). ${grades.length > 0 ? `Tienes ${grades.length} calificacion(es) con un promedio de ${avgStr}.` : 'Aún no tienes calificaciones registradas.'}`
+                ? `Bienvenido. Tienes acceso a tus horarios y calificaciones activas.`
                 : 'No estás inscripto en ningún curso todavía. Contacta al administrador.';
 
             const container = document.getElementById('grades-container');

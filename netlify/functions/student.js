@@ -36,11 +36,25 @@ exports.handler = async (event) => {
         args: [studentId]
       });
 
+      // Horario del alumno (basado en sus cursos inscriptos)
+      const schedulesResult = await db.execute({
+        sql: `SELECT sc.day_of_week, sc.start_time, sc.end_time, s.nombre as subject_name, 
+                     prof.nombre || ' ' || prof.apellido as professor_name
+              FROM schedules sc
+              JOIN subjects s ON sc.subject_id = s.id
+              JOIN users prof ON sc.professor_id = prof.id
+              JOIN students st ON sc.course_id = st.course_id
+              WHERE st.user_id = ?
+              ORDER BY sc.start_time ASC`,
+        args: [studentId]
+      });
+
       return {
         statusCode: 200,
         body: JSON.stringify({
           courses: coursesResult.rows,
           grades: gradesResult.rows,
+          schedules: schedulesResult.rows,
         })
       };
     } catch (error) {

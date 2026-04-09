@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Horarios | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-nav { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+        .tab-nav a {
+            padding: 12px 24px; text-decoration: none; color: var(--text-secondary);
+            font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab-nav a:hover { color: var(--text-primary); }
+        .tab-nav a.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .schedule-list {
+            margin-top: 2rem;
+        }
+
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .schedule-item:hover {
+            border-color: var(--accent-primary);
+            background: rgba(96, 165, 250, 0.04);
+        }
+
+        .schedule-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .day-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--accent-primary);
+            margin-right: 8px;
+        }
+
+        .time-text {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .subject-text {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .course-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .prof-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+    <script>
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user'));
+        if (!token || user?.role !== 'admin') window.location.href = '/index.html';
+    </script>
+</head>
+<body>
+    <nav class="navbar slide-in">
+        <div class="navbar-brand">🏫 Colegio</div>
+        <div class="navbar-nav">
+            <span class="user-badge" id="user-badge-text"></span>
+            <button onclick="logout()" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        <div class="grid" style="grid-template-columns: 1fr; margin-bottom: 0;">
+            <div><h2>Gestión de Horarios 📅</h2></div>
+        </div>
+
+        <div class="tab-nav">
+            <a href="/admin.html">👤 Usuarios</a>
+            <a href="/admin-materias.html">📚 Materias</a>
+            <a href="/admin-cursos.html">🏫 Cursos y Notas</a>
+            <a href="/admin-horarios.html" class="active">📅 Horarios</a>
+            <a href="/admin-anio.html">🗓️ Año Escolar</a>
+        </div>
+
+        <div id="messages" class="alert" style="display:none; margin-bottom:1rem;"></div>
+
+        <!-- Create Schedule Form -->
+        <div class="card fade-in">
+            <h3 style="margin-bottom: 1.5rem;">Crear Nuevo Horario</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Curso</label>
+                    <select id="sel-course" class="form-control">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Materia</label>
+                    <select id="sel-subject" class="form-control">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Profesor</label>
+                    <select id="sel-professor" class="form-control">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 150px;">
+                <div class="form-group">
+                    <label>Día</label>
+                    <select id="sel-day" class="form-control">
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hora Inicio</label>
+                    <input type="time" id="start-time" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Hora Fin</label>
+                    <input type="time" id="end-time" class="form-control">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button onclick="createSchedule()" id="btn-create" class="btn btn-primary" style="width: 100%; height: 42px;">Agregar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedules List -->
+        <div class="card fade-in">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+                <h3 style="margin:0;">📋 Horarios Definidos</h3>
+                <div style="display: flex; gap: 10px;">
+                    <select id="filter-course" class="form-control" style="width: 180px;" onchange="renderSchedules()">
+                        <option value="">Todos los Cursos</option>
+                    </select>
+                    <select id="filter-day" class="form-control" style="width: 150px;" onchange="renderSchedules()">
+                        <option value="">Todos los Días</option>
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                    </select>
+                </div>
+            </div>
+            <div id="schedule-list">
+                <p class="empty-state">Cargando horarios...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('user-badge-text').textContent = `${user.name} (Admin)`;
+
+        let allData = { courses: [], subjects: [], professors: [], schedules: [] };
+
+        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
+
+        function showMsg(text, isSuccess) {
+            const el = document.getElementById('messages');
+            el.textContent = text;
+            el.className = isSuccess ? 'alert alert-success' : 'alert alert-error';
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 4000);
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) { if (res.status === 401) logout(); return; }
+                allData = await res.json();
+                
+                populateSelects();
+                renderSchedules();
+            } catch (e) { showMsg('Error de conexión', false); }
+        }
+
+        function populateSelects() {
+            const sc = document.getElementById('sel-course');
+            const fc = document.getElementById('filter-course');
+            sc.innerHTML = '<option value="">-- Seleccionar --</option>';
+            fc.innerHTML = '<option value="">Todos los Cursos</option>';
+            allData.courses.forEach(c => {
+                const opt = `<option value="${c.id}">${c.nombre} (${c.anio} ${c.division})</option>`;
+                sc.innerHTML += opt;
+                fc.innerHTML += opt;
+            });
+
+            const ss = document.getElementById('sel-subject');
+            ss.innerHTML = '<option value="">-- Seleccionar --</option>';
+            allData.subjects.forEach(s => {
+                ss.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
+            });
+
+            const sp = document.getElementById('sel-professor');
+            sp.innerHTML = '<option value="">-- Seleccionar --</option>';
+            allData.professors.forEach(p => {
+                sp.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido}</option>`;
+            });
+        }
+
+        function renderSchedules() {
+            const container = document.getElementById('schedule-list');
+            const fCourse = document.getElementById('filter-course').value;
+            const fDay = document.getElementById('filter-day').value;
+
+            let filtered = allData.schedules;
+            if (fCourse) filtered = filtered.filter(s => String(s.course_id) === String(fCourse));
+            if (fDay) filtered = filtered.filter(s => s.day_of_week === fDay);
+
+            // Sort by day and time
+            const dayOrder = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6 };
+            filtered.sort((a, b) => {
+                if (dayOrder[a.day_of_week] !== dayOrder[b.day_of_week]) {
+                    return dayOrder[a.day_of_week] - dayOrder[b.day_of_week];
+                }
+                return a.start_time.localeCompare(b.start_time);
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="empty-state">No hay horarios definidos para esta selección.</p>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(s => `
+                <div class="schedule-item slide-in">
+                    <div class="schedule-info">
+                        <div>
+                            <span class="day-badge">${s.day_of_week}</span>
+                            <span class="time-text">${s.start_time} - ${s.end_time}</span>
+                        </div>
+                        <div class="subject-text">📚 ${s.subject_name}</div>
+                        <div class="course-text">🏫 ${s.course_name} (${s.course_data})</div>
+                        <div class="prof-text">👨‍🏫 Prof: ${s.professor_name}</div>
+                    </div>
+                    <button onclick="deleteSchedule(${s.id})" class="btn-delete">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        async function createSchedule() {
+            const course_id = document.getElementById('sel-course').value;
+            const subject_id = document.getElementById('sel-subject').value;
+            const professor_id = document.getElementById('sel-professor').value;
+            const day_of_week = document.getElementById('sel-day').value;
+            const start_time = document.getElementById('start-time').value;
+            const end_time = document.getElementById('end-time').value;
+
+            if (!course_id || !subject_id || !professor_id || !day_of_week || !start_time || !end_time) {
+                showMsg('Todos los campos son obligatorios.', false);
+                return;
+            }
+
+            const btn = document.getElementById('btn-create');
+            btn.disabled = true;
+            btn.textContent = 'Agregando...';
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ 
+                        action: 'create_schedule', 
+                        course_id: parseInt(course_id), 
+                        subject_id: parseInt(subject_id), 
+                        professor_id: parseInt(professor_id), 
+                        day_of_week, 
+                        start_time, 
+                        end_time 
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMsg(data.message, true);
+                    loadData();
+                } else {
+                    showMsg(data.error, false);
+                }
+            } catch (e) {
+                showMsg('Error de conexión', false);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Agregar';
+            }
+        }
+
+        async function deleteSchedule(id) {
+            if (!confirm('¿Seguro que quieres eliminar este horario?')) return;
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'delete_schedule', schedule_id: id })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMsg(data.message, true);
+                    loadData();
+                } else {
+                    showMsg(data.error, false);
+                }
+            } catch (e) { showMsg('Error de conexión', false); }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

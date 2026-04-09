@@ -98,6 +98,40 @@
         .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); font-size: 1.1rem; }
         .table { width: 100%; border-collapse: collapse; }
         .alert-info { background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2); color: var(--accent-primary); }
+
+        /* Schedule specific styles */
+        .schedule-subtabs { display: flex; gap: 8px; margin-bottom: 1rem; margin-top: 1rem; }
+        .schedule-subtabs button {
+            padding: 6px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; font-size: 0.8rem;
+        }
+        .schedule-subtabs button.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+        .sched-content { display: none; }
+        .sched-content.active { display: block; }
+        .weekly-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .day-column { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; }
+        .day-name { font-weight: 700; color: var(--accent-primary); margin-bottom: 0.8rem; text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-size: 0.9rem; }
+        .schedule-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 0.75rem; margin-bottom: 0.5rem; font-size: 0.82rem;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .schedule-time { font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 2px; }
+        .schedule-subj { font-weight: 500; color: var(--text-primary); }
+        .schedule-course { color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 4px; font-style: italic; }
+        .daily-list { display: flex; flex-direction: column; gap: 10px; }
+        .daily-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        .daily-time-box {
+            background: rgba(96,165,250,0.1); border-radius: 8px; padding: 0.5rem 0.75rem;
+            text-align: center; min-width: 90px;
+        }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -146,6 +180,7 @@
         <div class="tab-nav">
             <button class="active" onclick="switchTab('tab-grades', this)">📝 Cargar Notas</button>
             <button onclick="switchTab('tab-overview', this)">📊 Resumen de Notas</button>
+            <button onclick="switchTab('tab-schedule', this)">📅 Mi Horario</button>
         </div>
 
         <!-- TAB: Cargar Notas -->
@@ -203,6 +238,30 @@
                 </div>
             </div>
         </div>
+
+        <!-- TAB: Mi Horario -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="card fade-in">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin:0;">📅 Mi Cronograma de Clases</h3>
+                    <div class="schedule-subtabs">
+                        <button id="btn-sched-weekly" class="active" onclick="switchScheduleView('weekly')">Semanal</button>
+                        <button id="btn-sched-daily" onclick="switchScheduleView('daily')">Diario</button>
+                    </div>
+                </div>
+
+                <div id="sched-weekly" class="sched-content active">
+                    <div class="weekly-grid" id="weekly-container">
+                        <p class="empty-state">Cargando horario...</p>
+                    </div>
+                </div>
+                <div id="sched-daily" class="sched-content">
+                    <div class="daily-list" id="daily-container">
+                        <p class="empty-state">Cargando horario...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -245,6 +304,84 @@
             setTimeout(() => el.style.display = 'none', 3500);
         }
 
+        function switchScheduleView(view) {
+            document.querySelectorAll('.sched-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.schedule-subtabs button').forEach(b => b.classList.remove('active'));
+            if (view === 'weekly') {
+                document.getElementById('sched-weekly').classList.add('active');
+                document.getElementById('btn-sched-weekly').classList.add('active');
+            } else {
+                document.getElementById('sched-daily').classList.add('active');
+                document.getElementById('btn-sched-daily').classList.add('active');
+            }
+        }
+
+        function renderSchedule(schedules) {
+            const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+            const weeklyContainer = document.getElementById('weekly-container');
+            const dailyContainer = document.getElementById('daily-container');
+
+            if (!schedules || schedules.length === 0) {
+                const empty = '<p class="empty-state">No tienes horarios asignados aún.</p>';
+                weeklyContainer.innerHTML = empty;
+                dailyContainer.innerHTML = empty;
+                return;
+            }
+
+            // --- Render Weekly ---
+            let weeklyHtml = '';
+            days.forEach(day => {
+                const dayScheds = schedules.filter(s => s.day_of_week === day)
+                    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+                
+                let cardsHtml = dayScheds.map(s => `
+                    <div class="schedule-card slide-in">
+                        <span class="schedule-time">${s.start_time} - ${s.end_time}</span>
+                        <div class="schedule-subj">${s.subject_name}</div>
+                        <span class="schedule-course">🏫 ${s.course_name}</span>
+                    </div>
+                `).join('');
+                
+                if (dayScheds.length === 0) cardsHtml = '<p style="font-size:0.75rem; color:var(--text-secondary); text-align:center;">Sin clases</p>';
+
+                weeklyHtml += `
+                    <div class="day-column">
+                        <div class="day-name">${day}</div>
+                        ${cardsHtml}
+                    </div>
+                `;
+            });
+            weeklyContainer.innerHTML = weeklyHtml;
+
+            // --- Render Daily ---
+            const todayIndex = new Date().getDay();
+            const dayMap = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 0: 'Domingo' };
+            const todayName = dayMap[todayIndex];
+            
+            const todayScheds = schedules.filter(s => s.day_of_week === todayName)
+                .sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            if (todayScheds.length === 0) {
+                dailyContainer.innerHTML = `<div class="empty-state">No tienes clases para hoy (${todayName}).</div>`;
+            } else {
+                dailyContainer.innerHTML = `
+                    <h4 style="margin-bottom:1rem; color:var(--accent-primary);">Mi agenda para hoy (${todayName})</h4>
+                    ${todayScheds.map(s => `
+                        <div class="daily-item slide-in">
+                            <div class="daily-time-box">
+                                <div style="font-size:1rem; font-weight:700; color:var(--accent-primary);">${s.start_time}</div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary);">${s.end_time}</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">${s.subject_name}</div>
+                                <div style="font-size:0.85rem; color:var(--text-secondary);">🏫 Curso: ${s.course_name}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+        }
+
         // ── Load Data ────────────────────────────────────────────
         async function loadData(silent = false) {
             try {
@@ -252,6 +389,8 @@
                 if (res.status === 401 || res.status === 403) { logout(); return; }
                 if (!res.ok) { const e = await res.json(); showMsg(e.error || 'Error', false); return; }
                 allData = await res.json();
+
+                renderSchedule(allData.schedules || []);
 
                 document.getElementById('welcome-msg').textContent =
                     `Tienes ${allData.subjects.length} materia(s) asignada(s) y ${allData.students.length} alumno(s) en el sistema.`;
